@@ -31,7 +31,7 @@
 #include "modmachine.h"
 #include "mphalport.h"
 #include "mpconfigboard.h"
-//#include "machine_spi.h"
+#include "extmod/machine_spi.h"
 #include "modnetwork.h"
 //#include "plic.h"cd
 //#include "sysctl.h"
@@ -40,7 +40,6 @@
 //#include "spihs.h"
 #include "wifi_spi.h"
 //#include "sleep.h"
-
 typedef struct _machine_spi_obj_t {
     mp_obj_base_t base;
     spi_inst_t *const spi;
@@ -368,8 +367,8 @@ bool get_mqttsubrecv(esp8285_obj*nic, uint32_t LinkID, mqtt_msg* mqttmsg)
 	const mp_stream_p_t * spi_stream = mp_get_stream(nic->spi_obj);
 	machine_spi_obj_t *self = MP_OBJ_TO_PTR(nic->spi_obj);
 	while (mp_hal_ticks_ms() - start < 3000) {
-        while(gpio_get(21) > 0) {
-            spi_stream->read(nic->spi_obj,&nic->buffer.buffer[iter++],1,&errcode);
+        while(gpio_get(12) > 0) {
+            iter += readCmd(nic->spi_obj,&nic->buffer.buffer);
         }
 	}
 	cur = strstr((char*)nic->buffer.buffer, "+MQTTSUBRECV");
@@ -448,6 +447,41 @@ uint32_t esp_recv_mul(esp8285_obj* nic,char mux_id, char* buffer, uint32_t buffe
     return 0;
 }
 
+uint32_t readdata(esp8285_obj* nic, char* data)
+{
+	static uint32_t read_time = 0;
+	spi_trans_len trans_len;
+	spi_trans_data trans_data;
+	memset(&trans_len, 0x0, sizeof(trans_len));
+	memset(&trans_data, 0x0, sizeof(trans_data)); 
+	uint8_t addr = 0x0;
+	const mp_machine_spi_p_t * spi_stream = (const mp_machine_spi_p_t *)((const mp_obj_base_t *)MP_OBJ_TO_PTR(nic->spi_obj))->type->protocol;
+	int data_len = sizeof(trans_len);
+	if(read_time == 0){
+		trans_len.cmd = SPI_MASTER_READ_STATUS_FROM_SLAVE_CMD;
+		trans_len.len = 0;
+		int data_len = sizeof(trans_len);
+		mp_hal_pin_output(6);
+		gpio_put(6,0);
+		spi_stream->transfer(nic->spi_obj,sizeof(trans_len.cmd),(uint8_t *)&trans_len.cmd,(uint8_t *)&trans_len.cmd);
+		spi_stream->transfer(nic->spi_obj,sizeof(trans_len.len),(uint8_t *)&trans_len.len,(uint8_t *)&trans_len.len);
+		gpio_put(6,1);
+		read_time = (trans_len.len + 63) / 64;
+	}
+	if(read_time > 0) {
+		data_len = sizeof(trans_data);
+		trans_data.cmd = SPI_MASTER_READ_DATA_FROM_SLAVE_CMD;
+		trans_data.addr = 0x00;	
+		gpio_put(6,0);
+		spi_stream->transfer(nic->spi_obj,data_len,(uint8_t *)&trans_data,(uint8_t *)&trans_data);
+		gpio_put(6,1);
+		memcpy(data, trans_data.data, sizeof(trans_data.data));
+		mp_printf(MP_PYTHON_PRINTER, "read data: %s len:%d\n",data,strlen(trans_data.data));
+		read_time--;
+	}
+	return read_time;
+}
+
 uint32_t esp_recv_mul_id(esp8285_obj* nic,char* coming_mux_id, char* buffer, uint32_t buffer_size, uint32_t timeout)
 {
     return recvPkg(nic,buffer, buffer_size, NULL, timeout, coming_mux_id, NULL, false);
@@ -466,6 +500,8 @@ uint32_t recvPkg(esp8285_obj*nic,char* out_buff, uint32_t out_buff_len, uint32_t
 
     uint8_t temp_buff[16];
     uint8_t temp_buff2[16];
+	uint8_t temp_read[64];
+	uint8_t temp_read_len = 0;
     uint8_t temp_buff_len = 0;
     uint8_t temp_buff2_len = 0;
     uint8_t find_frame_flag_index = 0;
@@ -522,12 +558,17 @@ uint32_t recvPkg(esp8285_obj*nic,char* out_buff, uint32_t out_buff_len, uint32_t
     start2 = mp_hal_ticks_ms();
 	machine_spi_obj_t *self = MP_OBJ_TO_PTR(nic->spi_obj);
     do{
-        self->read_lock = true;
-        spi_drain_rx_fifo(self);
-        self->read_lock = false;
-        if(ringbuf_avail(&self->read_buffer) > 0)
+        //self->read_lock = true;
+        //spi_drain_rx_fifo(self);
+        //self->read_lock = false;
+		mp_hal_pin_input(12);
+        if(gpio_get(12) > 0)
         {
-            spi_stream->read(nic->spi_obj,temp_buff + temp_buff_len,1,&errcode);
+			if(temp_read_len == 0 || temp_read_len == 64){
+				readdata(nic->spi_obj,temp_read);
+				temp_read_len = 0;
+			}
+			temp_buff[temp_buff_len] = temp_read[++temp_read_len];
             if(find_frame_flag_index == 0 && temp_buff[temp_buff_len] == '+'){
                 ++find_frame_flag_index;
                 start = mp_hal_ticks_ms();
@@ -620,10 +661,11 @@ uint32_t recvPkg(esp8285_obj*nic,char* out_buff, uint32_t out_buff_len, uint32_t
         {
             return -3;
         }
-        self->read_lock = true;
-        spi_drain_rx_fifo(self);
-        self->read_lock = false;
-    }while( (timeout || find_frame_flag_index) && (!*peer_closed || ringbuf_avail(&self->read_buffer) > 0) );
+        //self->read_lock = true;
+        //spi_drain_rx_fifo(self);
+        //self->read_lock = false;
+		mp_hal_pin_input(12);
+    }while( (timeout || find_frame_flag_index) && (!*peer_closed || gpio_get(12) > 0) );
     size = Buffer_Size(&nic->buffer);
     if( size == 0 && !peer_just_closed && *peer_closed)//peer closed and no data in buffer
     {
@@ -648,18 +690,123 @@ uint32_t recvPkg(esp8285_obj*nic,char* out_buff, uint32_t out_buff_len, uint32_t
     }
     return size;
 }
+char *strncpy_data(char *s1, const char *s2, size_t n) {
+     char *dst = s1;
+     const char *src = s2;
+     /* Copy bytes, one at a time.  */
+     while (n > 0) {
+        n--;
+        *dst++ = *src++;
+     }
+     return s1;
+ }
+static uint32_t read_time = 0;
+uint32_t readCmd(esp8285_obj* nic, char* data)
+{
+	static uint32_t read_last_len = 0;
+	spi_trans_len trans_len;
+	spi_trans_data trans_data;
+	memset(&trans_len, 0x0, sizeof(trans_len));
+	memset(&trans_data, 0x0, sizeof(trans_data)); 
+	uint8_t addr = 0x0;
+	const mp_machine_spi_p_t * spi_stream = (const mp_machine_spi_p_t *)((const mp_obj_base_t *)MP_OBJ_TO_PTR(nic->spi_obj))->type->protocol;
+	int data_len = sizeof(trans_len);
+	if(read_time == 0){
+		trans_len.cmd = SPI_MASTER_READ_STATUS_FROM_SLAVE_CMD;
+		trans_len.len = 0;
+		int data_len = sizeof(trans_len);
+		mp_hal_pin_output(6);
+		gpio_put(6,0);
+		spi_stream->transfer(nic->spi_obj,sizeof(trans_len.cmd),(uint8_t *)&trans_len.cmd,(uint8_t *)&trans_len.cmd);
+		spi_stream->transfer(nic->spi_obj,sizeof(trans_len.len),(uint8_t *)&trans_len.len,(uint8_t *)&trans_len.len);
+		gpio_put(6,1);
+		read_time = (trans_len.len + 63) / 64;
+		read_last_len = (trans_len.len + 64) % 64;
+	}
+	if(read_time > 0) {
+		data_len = sizeof(trans_data);
+		trans_data.cmd = SPI_MASTER_READ_DATA_FROM_SLAVE_CMD;
+		trans_data.addr = 0x00;	
+		gpio_put(6,0);
+		spi_stream->transfer(nic->spi_obj,data_len,(uint8_t *)&trans_data,(uint8_t *)&trans_data);
+		gpio_put(6,1);
+		memcpy(data, trans_data.data, sizeof(trans_data.data));
+		mp_printf(MP_PYTHON_PRINTER, "read data: %s len:%d\n",data,strlen(trans_data.data));
+		read_time--;
+		data += 64;
+	}
+	if(!read_time){
+		*(data+read_last_len) = "\0";
+		return read_last_len;
+	}
+	return 64;
+}
+
+void sendCmd(esp8285_obj* nic, char* data, uint32_t data_size)
+{
+	uint32_t send_time = 0;
+    spi_trans_data trans_data;
+	spi_trans_len trans_len;
+	const mp_machine_spi_p_t * spi_stream = mp_get_stream(nic->spi_obj);
+ 	memset(&trans_len, 0x0, sizeof(trans_len));
+	trans_len.cmd = SPI_MASTER_WRITE_STATUS_TO_SLAVE_CMD;
+	trans_len.len = data_size;
+	int data_len = sizeof(spi_trans_len);
+	mp_printf(MP_PYTHON_PRINTER, "senddata_len: cmd:%d,len:%d\n",trans_len.cmd,trans_len.len);
+	mp_hal_pin_output(6);
+	gpio_put(6,0);
+	spi_stream->transfer(nic->spi_obj,sizeof(trans_len.cmd),(uint8_t *)&trans_len.cmd,(uint8_t *)&trans_len.cmd);
+	spi_stream->transfer(nic->spi_obj,sizeof(trans_len.len),(uint8_t *)&trans_len.len,(uint8_t *)&trans_len.len);
+	gpio_put(6,1);
+	unsigned long start = 0;
+	send_time = (data_size + 63) / 64;
+	mp_printf(MP_PYTHON_PRINTER, "redy send data NO.%d len:%d data:%s\n",send_time,strlen(data),data);
+	while(send_time > 0) {
+		memset(&trans_data, 0x0, sizeof(trans_data));           // clear all bit
+		data_len = sizeof(trans_data);
+		trans_data.cmd = SPI_MASTER_WRITE_DATA_TO_SLAVE_CMD;
+		trans_data.addr = 0x0;
+		if(send_time = 1)
+			memcpy(&trans_data.data, data, strlen(data));
+		else
+			memcpy(&trans_data.data, data, 64);
+		start = mp_hal_ticks_ms();
+		while( gpio_get(12) == 0){
+			if(mp_hal_ticks_ms() - start < 1000)
+				return false;
+		}
+		gpio_put(6,0);
+		spi_stream->transfer(nic->spi_obj,data_len,(uint8_t *)&trans_data,0);
+		gpio_put(6,1);
+		send_time--;
+		data += 64;
+	}	
+		
+	start = mp_hal_ticks_ms();
+	while( gpio_get(12) == 0){
+		if(mp_hal_ticks_ms() - start < 1000)
+			return false;
+	}
+	
+ 	memset(&trans_len, 0x0, sizeof(trans_len));
+	trans_len.cmd = SPI_MASTER_WRITE_STATUS_TO_SLAVE_CMD;
+	trans_len.len = 0;
+	data_len = sizeof(spi_trans_len);
+	mp_printf(MP_PYTHON_PRINTER, "send Cmd over: cmd:%d,len:%d\n",trans_len.cmd,trans_len.len);
+	gpio_put(6,0);
+	spi_stream->transfer(nic->spi_obj,sizeof(trans_len.cmd),(uint8_t *)&trans_len.cmd,(uint8_t *)&trans_len.cmd);
+	spi_stream->transfer(nic->spi_obj,sizeof(trans_len.len),(uint8_t *)&trans_len.len,(uint8_t *)&trans_len.len);
+	gpio_put(6,1);
+	read_time = 0;
+}
 
 void rx_empty(esp8285_obj* nic) 
 {
 	int errcode;
-	char data = 0;
-	const mp_stream_p_t * spi_stream = mp_get_stream(nic->spi_obj);
-	machine_spi_obj_t *self = MP_OBJ_TO_PTR(nic->spi_obj);
-    self->read_lock = true;
-    spi_drain_rx_fifo(self);
-    self->read_lock = false;
-    while(ringbuf_avail(&self->read_buffer) > 0) {
-        spi_stream->read(nic->spi_obj,&data,1,&errcode); 
+	char *data;
+    mp_hal_pin_input(12);
+    while(gpio_get(12) > 0){
+		readCmd(nic, data); 
     }
 }
 
@@ -669,19 +816,15 @@ char* recvString_1(esp8285_obj* nic, const char* target1,uint32_t timeout)
 	uint32_t iter = 0;
 	memset(nic->buffer.buffer,0,ESP8285_BUF_SIZE);
     unsigned long start = mp_hal_ticks_ms();
-	const mp_stream_p_t * spi_stream = mp_get_stream(nic->spi_obj);
 	machine_spi_obj_t *self = MP_OBJ_TO_PTR(nic->spi_obj);
-    while (mp_hal_ticks_ms() - start < timeout) {
-        self->read_lock = true;
-        spi_drain_rx_fifo(self);
-        self->read_lock = false;
-        while(ringbuf_avail(&self->read_buffer) > 0) {
-            spi_stream->read(nic->spi_obj,&nic->buffer.buffer[iter++],1,&errcode);
+	while (mp_hal_ticks_ms() - start < timeout) {
+        while(gpio_get(12) > 0){
+			iter += readCmd(nic, nic->buffer.buffer+iter);	
         }
         if (data_find(nic->buffer.buffer,iter,target1) != -1) {
             return (char*)nic->buffer.buffer;
         } 
-    }
+	}
     return NULL;
 }
 
@@ -693,17 +836,15 @@ char* recvString_2(esp8285_obj* nic,char* target1, char* target2, uint32_t timeo
     *find_index = -1;
 	memset(nic->buffer.buffer,0,ESP8285_BUF_SIZE);
     unsigned int start = mp_hal_ticks_ms();
-	const mp_stream_p_t * spi_stream = mp_get_stream(nic->spi_obj);
 	machine_spi_obj_t *self = MP_OBJ_TO_PTR(nic->spi_obj);
     while (mp_hal_ticks_ms() - start < timeout) {
-        self->read_lock = true;
-        spi_drain_rx_fifo(self);
-        self->read_lock = false;
-        while(ringbuf_avail(&self->read_buffer) > 0 && iter < ESP8285_BUF_SIZE) {
-            spi_stream->read(nic->spi_obj,&nic->buffer.buffer[iter++],1,&errcode);
+        while(gpio_get(12) > 0 && iter < ESP8285_BUF_SIZE) {
+			iter += readCmd(nic, nic->buffer.buffer+iter);	
         }
         if (data_find(nic->buffer.buffer,iter,target1) != -1) {
             *find_index = 0;
+			if (data_find(nic->buffer.buffer,iter,target2) != -1) 
+				*find_index = 1;
             return (char*)nic->buffer.buffer;
         } else if (data_find(nic->buffer.buffer,iter,target2) != -1) {
             *find_index = 1;
@@ -724,11 +865,12 @@ char* recvString_3(esp8285_obj* nic,char* target1, char* target2,char* target3,u
 	const mp_stream_p_t * spi_stream = mp_get_stream(nic->spi_obj);
 	machine_spi_obj_t *self = MP_OBJ_TO_PTR(nic->spi_obj);
     while (mp_hal_ticks_ms() - start < timeout) {
-        self->read_lock = true;
-        spi_drain_rx_fifo(self);
-        self->read_lock = false;
-        while(ringbuf_avail(&self->read_buffer) > 0) {
-            spi_stream->read(nic->spi_obj,&nic->buffer.buffer[iter++],1,&errcode);
+        //self->read_lock = true;
+        //spi_drain_rx_fifo(self);
+        //self->read_lock = false;
+		mp_hal_pin_input(12);
+        while(gpio_get(12) > 0) {
+            iter += readCmd(nic, nic->buffer.buffer+iter);
         }
         if (data_find(nic->buffer.buffer,iter,target1) != -1) {
             *find_index = 0;
@@ -773,18 +915,19 @@ bool eAT(esp8285_obj* nic)
 {	
 	int errcode = 0;
 	const char* cmd = "AT\r\n";
-	const mp_stream_p_t * spi_stream = mp_get_stream(nic->spi_obj);
     rx_empty(nic);// clear rx
-	spi_stream->write(nic->spi_obj,cmd,strlen(cmd),&errcode);
-    if(recvFind(nic,"OK",1000))
-        return true;
-    rx_empty(nic);
-    spi_stream->write(nic->spi_obj,cmd,strlen(cmd),&errcode);
-    if(recvFind(nic,"OK",1000))
-        return true;
-    rx_empty(nic);
-    spi_stream->write(nic->spi_obj,cmd,strlen(cmd),&errcode);
-    return recvFind(nic,"OK",1000);
+	sendCmd(nic,cmd,strlen(cmd));
+	if(recvFind(nic,"OK",1000))
+		return true;
+    rx_empty(nic);// clear rx
+	sendCmd(nic,cmd,strlen(cmd));
+	if(recvFind(nic,"OK",1000))
+		return true;
+    rx_empty(nic);// clear rx
+	sendCmd(nic,cmd,strlen(cmd));
+	if(recvFind(nic,"OK",1000))
+		return true;
+	return false;
 }
 
 bool eATE(esp8285_obj* nic,bool enable)
@@ -795,13 +938,13 @@ bool eATE(esp8285_obj* nic,bool enable)
     if(enable)
     {
     	const char* cmd = "ATE0\r\n";
-		spi_stream->write(nic->spi_obj,cmd,strlen(cmd),&errcode);
+		sendCmd(nic,cmd,strlen(cmd));
     	return recvFind(nic,"OK",1000);
     }
 	else
 	{
     	const char* cmd = "ATE1\r\n";
-		spi_stream->write(nic->spi_obj,cmd,strlen(cmd),&errcode);
+		sendCmd(nic,cmd,strlen(cmd));
     	return recvFind(nic,"OK",1000);		
 	}
 }
@@ -813,7 +956,7 @@ bool eATRST(esp8285_obj* nic)
 	const char* cmd = "AT+RST\r\n";
 	const mp_stream_p_t * spi_stream = mp_get_stream(nic->spi_obj);
     rx_empty(nic);// clear rx
-	spi_stream->write(nic->spi_obj,cmd,strlen(cmd),&errcode);
+	sendCmd(nic,cmd,strlen(cmd));
     return recvFind(nic,"OK",1000);
 }
 
@@ -824,7 +967,7 @@ bool eATGMR(esp8285_obj* nic,char** version)
 	const char* cmd = "AT+GMR\r\n";
 	const mp_stream_p_t * spi_stream = mp_get_stream(nic->spi_obj);
     rx_empty(nic);// clear rx
-	spi_stream->write(nic->spi_obj,cmd,strlen(cmd),&errcode);
+	sendCmd(nic,cmd,strlen(cmd));
 
     return recvFindAndFilter(nic,"OK", "\r\r\n", "\r\n\r\nOK", version, 5000); 
 }
@@ -840,7 +983,7 @@ bool qATCWMODE(esp8285_obj* nic,char* mode)
         return false;
     }
     rx_empty(nic);
-	spi_stream->write(nic->spi_obj,cmd,strlen(cmd),&errcode);
+	sendCmd(nic,cmd,strlen(cmd));
     ret = recvFindAndFilter(nic,"OK", "+CWMODE:", "\r\n\r\nOK", &str_mode,1000); 
     if (ret) {
         *mode = atoi(str_mode);
@@ -859,9 +1002,9 @@ bool sATCWMODE(esp8285_obj* nic,char mode)
     int8_t find;
 	itoa(mode, mode_str, 10);
     rx_empty(nic);
-	spi_stream->write(nic->spi_obj,cmd,strlen(cmd),&errcode);
-	spi_stream->write(nic->spi_obj,mode_str,strlen(mode_str),&errcode);
-	spi_stream->write(nic->spi_obj,"\r\n",strlen("\r\n"),&errcode);    
+	sendCmd(nic,cmd,strlen(cmd));
+	sendCmd(nic,mode_str,strlen(mode_str));
+	sendCmd(nic,"\r\n",strlen("\r\n"));  
     if(recvString_2(nic,"OK", "no change",1000, &find) != NULL)
         return true;
     return false;
@@ -873,13 +1016,13 @@ bool sATCWJAP(esp8285_obj* nic, const char* ssid, const char* pwd)
 	const char* cmd = "AT+CWJAP=\"";
     int8_t find;
 	const mp_stream_p_t * spi_stream = mp_get_stream(nic->spi_obj);	
-    rx_empty(nic);	
-	spi_stream->write(nic->spi_obj,cmd,strlen(cmd),&errcode);
-	spi_stream->write(nic->spi_obj,ssid,strlen(ssid),&errcode);
-	spi_stream->write(nic->spi_obj,"\",\"",strlen("\",\""),&errcode);
-	spi_stream->write(nic->spi_obj,pwd,strlen(pwd),&errcode);
-	spi_stream->write(nic->spi_obj,"\"",strlen("\""),&errcode);
-	spi_stream->write(nic->spi_obj,"\r\n",strlen("\r\n"),&errcode);
+    rx_empty(nic);
+	sendCmd(nic,cmd,strlen(cmd));	
+	sendCmd(nic,ssid,strlen(ssid));
+	sendCmd(nic,"\",\"",strlen("\",\""));
+	sendCmd(nic,pwd,strlen(pwd));
+	sendCmd(nic,"\"",strlen("\""));
+	sendCmd(nic,"\r\n",strlen("\r\n"));
     if(recvString_2(nic,"OK", "FAIL", 10000, &find) != NULL && find==0 )
         return true;
     return false;
@@ -900,11 +1043,11 @@ bool sATCWDHCP(esp8285_obj* nic,char mode, bool enabled)
 		strcpy(strEn, "0");
 	}
     rx_empty(nic);
-	spi_stream->write(nic->spi_obj,cmd,strlen(cmd),&errcode);
-	spi_stream->write(nic->spi_obj,strEn,strlen(strEn),&errcode);
-	spi_stream->write(nic->spi_obj,",",strlen(","),&errcode);
-	spi_stream->write(nic->spi_obj, &mode,1,&errcode);
-	spi_stream->write(nic->spi_obj,"\r\n",strlen("\r\n"),&errcode);
+	sendCmd(nic,cmd,strlen(cmd));
+	sendCmd(nic,strEn,strlen(strEn));
+	sendCmd(nic,",",strlen(","));
+	sendCmd(nic, &mode,1);
+	sendCmd(nic,"\r\n",strlen("\r\n"));
     if( recvString_2(nic,"OK", "FAIL", 10000, &find) != NULL && find==0)
         return true;    
     return false;
@@ -917,7 +1060,7 @@ bool eATCWQAP(esp8285_obj* nic)
 	const char* cmd = "AT+CWQAP\r\n";
 	const mp_stream_p_t * spi_stream = mp_get_stream(nic->spi_obj);	
     rx_empty(nic);
-	spi_stream->write(nic->spi_obj,cmd,strlen(cmd),&errcode);
+	sendCmd(nic,cmd,strlen(cmd));
     return recvFind(nic,"OK",1000);
 }
 
@@ -926,10 +1069,10 @@ bool eATCIPSTATUS(esp8285_obj* nic,char** list)
     int errcode = 0;
 	const char* cmd = "AT+CIPSTATUS\r\n";
 	const mp_stream_p_t * spi_stream = mp_get_stream(nic->spi_obj);	
-	spi_stream->write(nic->spi_obj,cmd,strlen(cmd),&errcode);
+	sendCmd(nic,cmd,strlen(cmd));
     sleep_ms(100);
     rx_empty(nic);
-    spi_stream->write(nic->spi_obj,cmd,strlen(cmd),&errcode);
+    sendCmd(nic,cmd,strlen(cmd));
     return recvFindAndFilter(nic,"OK", "\r\r\n", "\r\n\r\nOK", list,1000);
 }
 bool sATCIPSTARTSingle(esp8285_obj* nic,const char* type, char* addr, uint32_t port)
@@ -943,13 +1086,13 @@ bool sATCIPSTARTSingle(esp8285_obj* nic,const char* type, char* addr, uint32_t p
     int8_t find_index;
 	itoa(port, port_str, 10);
 	rx_empty(nic);
-	spi_stream->write(nic->spi_obj,cmd,strlen(cmd),&errcode);
-	spi_stream->write(nic->spi_obj,type,strlen(type),&errcode);
-	spi_stream->write(nic->spi_obj,"\",\"",strlen("\",\""),&errcode);
-	spi_stream->write(nic->spi_obj,host,strlen(host),&errcode);
-	spi_stream->write(nic->spi_obj,"\",",strlen("\","),&errcode);
-	spi_stream->write(nic->spi_obj,port_str,strlen(port_str),&errcode);
-	spi_stream->write(nic->spi_obj,"\r\n",strlen("\r\n"),&errcode);
+	sendCmd(nic,cmd,strlen(cmd));
+	sendCmd(nic,type,strlen(type));
+	sendCmd(nic,"\",\"",strlen("\",\""));
+	sendCmd(nic,host,strlen(host));
+	sendCmd(nic,"\",",strlen("\","));
+	sendCmd(nic,port_str,strlen(port_str));
+	sendCmd(nic,"\r\n",strlen("\r\n"));
     if(recvString_3(nic,"OK", "ERROR", "ALREADY CONNECT", 10000, &find_index)!=NULL && (find_index==0 || find_index==2) )
         return true;
     return false;
@@ -963,15 +1106,15 @@ bool sATCIPSTARTMultiple(esp8285_obj*nic,char mux_id, char* type, char* addr, ui
 	itoa(port,port_str ,10);
 	const mp_stream_p_t * spi_stream = mp_get_stream(nic->spi_obj);
 	rx_empty(nic);
-	spi_stream->write(nic->spi_obj,cmd,strlen(cmd),&errcode); 
-	spi_stream->write(nic->spi_obj, &mux_id,1,&errcode);
-	spi_stream->write(nic->spi_obj,",\"",strlen(",\""),&errcode);
-	spi_stream->write(nic->spi_obj,type,strlen(type),&errcode);
-	spi_stream->write(nic->spi_obj,"\",\"",strlen("\",\""),&errcode);
-	spi_stream->write(nic->spi_obj,addr,strlen(addr),&errcode);
-	spi_stream->write(nic->spi_obj,"\",",strlen("\","),&errcode);
-	spi_stream->write(nic->spi_obj,port_str,strlen(port_str),&errcode);
-	spi_stream->write(nic->spi_obj,"\r\n",strlen("\r\n"),&errcode);
+	sendCmd(nic,cmd,strlen(cmd));
+	sendCmd(nic,&mux_id,1);
+	sendCmd(nic,",\"",strlen(",\""));
+	sendCmd(nic,type,strlen(type));
+	sendCmd(nic,"\",\"",strlen("\",\""));
+	sendCmd(nic,addr,strlen(addr));
+	sendCmd(nic,"\",",strlen("\","));
+	sendCmd(nic,port_str,strlen(port_str));
+	sendCmd(nic,"\r\n",strlen("\r\n"));
     if(recvString_3(nic,"OK", "ERROR", "ALREADY CONNECT", 10000, &find_index) != NULL  && (find_index==0 || find_index==2) )
         return true;
     return false;
@@ -984,12 +1127,12 @@ bool sATCIPSENDSingle(esp8285_obj*nic,const char* buffer, uint32_t len, uint32_t
 	itoa(len,len_str ,10);
 	const mp_stream_p_t * spi_stream = mp_get_stream(nic->spi_obj);
 	rx_empty(nic);
-	spi_stream->write(nic->spi_obj,cmd,strlen(cmd),&errcode);
-	spi_stream->write(nic->spi_obj,len_str,strlen(len_str),&errcode);
-	spi_stream->write(nic->spi_obj,"\r\n",strlen("\r\n"),&errcode);
+	sendCmd(nic,cmd,strlen(cmd));
+	sendCmd(nic,len_str,strlen(len_str));
+	sendCmd(nic,"\r\n",strlen("\r\n"));
     if (recvFind(nic,">", 5000)) {
         rx_empty(nic);
-		spi_stream->write(nic->spi_obj,buffer,len,&errcode);
+		sendCmd(nic,buffer,len);
         return recvFind(nic,"SEND OK", timeout);
     }
     return false;
@@ -1002,14 +1145,14 @@ bool sATCIPSENDMultiple(esp8285_obj* nic,char mux_id, const char* buffer, uint32
 	itoa(len,len_str ,10);
 	const mp_stream_p_t * spi_stream = mp_get_stream(nic->spi_obj);
 	rx_empty(nic);
-	spi_stream->write(nic->spi_obj,cmd,strlen(cmd),&errcode);
-	spi_stream->write(nic->spi_obj, &mux_id,1,&errcode);
-	spi_stream->write(nic->spi_obj,",",strlen(","),&errcode);
-	spi_stream->write(nic->spi_obj,len_str,strlen(len_str),&errcode);
+	sendCmd(nic,cmd,strlen(cmd));
+	sendCmd(nic,&mux_id,1);
+	sendCmd(nic,",",strlen(","));
+	sendCmd(nic,len_str,strlen(len_str));
     if (recvFind(nic,">", 5000)) {
         rx_empty(nic);
-		spi_stream->write(nic->spi_obj,buffer,len,&errcode);
-		spi_stream->write(nic->spi_obj,"\r\n",strlen("\r\n"),&errcode);
+		sendCmd(nic,buffer,len);
+		sendCmd(nic,"\r\n",strlen("\r\n"));
         return recvFind(nic,"SEND OK", 10000);
     }
     return false;
@@ -1021,9 +1164,9 @@ bool sATCIPCLOSEMulitple(esp8285_obj* nic,char mux_id)
     int8_t find;
 	const mp_stream_p_t * spi_stream = mp_get_stream(nic->spi_obj);	
 	rx_empty(nic);
-	spi_stream->write(nic->spi_obj,cmd,strlen(cmd),&errcode);
-	spi_stream->write(nic->spi_obj,(const char*)&mux_id,1,&errcode);
-	spi_stream->write(nic->spi_obj,"\r\n",strlen("\r\n"),&errcode);
+	sendCmd(nic,cmd,strlen(cmd));
+	sendCmd(nic,(const char*)&mux_id,1);
+	sendCmd(nic,"\r\n",strlen("\r\n"));
     if(recvString_2(nic,"OK", "link is not", 5000, &find) != NULL)
         return true;
     return false;
@@ -1036,7 +1179,7 @@ bool eATCIPCLOSESingle(esp8285_obj* nic)
 	const char* cmd = "AT+CIPCLOSE\r\n";
 	const mp_stream_p_t * spi_stream = mp_get_stream(nic->spi_obj);	
     rx_empty(nic);
-	spi_stream->write(nic->spi_obj,cmd,strlen(cmd),&errcode);
+	sendCmd(nic,cmd,strlen(cmd));
     if (recvString_2(nic, "OK", "ERROR", 5000, &find) != NULL)
     {
         if( find == 0)
@@ -1050,7 +1193,7 @@ bool eATCIFSR(esp8285_obj* nic,char** list)
 	const char* cmd = "AT+CIFSR\r\n";
 	const mp_stream_p_t * spi_stream = mp_get_stream(nic->spi_obj);
     rx_empty(nic);
-	spi_stream->write(nic->spi_obj,cmd,strlen(cmd),&errcode);
+	sendCmd(nic,cmd,strlen(cmd));
     return recvFindAndFilter(nic,"OK", "\r\r\n", "\r\n\r\nOK", list,5000);
 }
 bool sATCIPMUX(esp8285_obj* nic,char mode)
@@ -1062,9 +1205,9 @@ bool sATCIPMUX(esp8285_obj* nic,char mode)
 	itoa(mode, mode_str, 10);
 	const mp_stream_p_t * spi_stream = mp_get_stream(nic->spi_obj);	
     rx_empty(nic);
-	spi_stream->write(nic->spi_obj,cmd,strlen(cmd),&errcode);
-	spi_stream->write(nic->spi_obj,mode_str,strlen(mode_str),&errcode);
-	spi_stream->write(nic->spi_obj,"\r\n",strlen("\r\n"),&errcode);
+	sendCmd(nic,cmd,strlen(cmd));
+	sendCmd(nic,mode_str,strlen(mode_str));
+	sendCmd(nic,"\r\n",strlen("\r\n"));
     if(recvString_2(nic,"OK", "Link is builded",5000, &find) != NULL && find==0)
         return true;
     return false;
@@ -1079,18 +1222,18 @@ bool sATCIPSERVER(esp8285_obj* nic,char mode, uint32_t port)
 		char port_str[10] = {0};
 		itoa(port, port_str, 10);
         rx_empty(nic);
-		spi_stream->write(nic->spi_obj,cmd,strlen(cmd),&errcode);
-		spi_stream->write(nic->spi_obj,port_str,strlen(port_str),&errcode);
-		spi_stream->write(nic->spi_obj,"\r\n",strlen("\r\n"),&errcode);
+		sendCmd(nic,cmd,strlen(cmd));
+		sendCmd(nic,port_str,strlen(port_str));
+		sendCmd(nic,"\r\n",strlen("\r\n"));
         if(recvString_2(nic,"OK", "no change",1000, &find) != NULL)
             return true;
         return false;
     } else {
         rx_empty(nic);
 		const char* cmd = "AT+CIPSERVER=0";
-		spi_stream->write(nic->spi_obj,cmd,strlen(cmd),&errcode);
-		spi_stream->write(nic->spi_obj,"\r\n",strlen("\r\n"),&errcode);
-        return recvFind(nic,"\r\r\n",1000);
+		sendCmd(nic,cmd,strlen(cmd));
+		sendCmd(nic,"\r\n",strlen("\r\n"));
+        return recvFind(nic,"\r\n",1000);
     }
 }
 bool sATCIPSTO(esp8285_obj* nic,uint32_t timeout)
@@ -1102,9 +1245,9 @@ bool sATCIPSTO(esp8285_obj* nic,uint32_t timeout)
 	itoa(timeout, timeout_str, 10);
 	const mp_stream_p_t * spi_stream = mp_get_stream(nic->spi_obj);	
 	rx_empty(nic);
-	spi_stream->write(nic->spi_obj,cmd,strlen(cmd),&errcode);
-	spi_stream->write(nic->spi_obj,timeout_str,strlen(timeout_str),&errcode);
-    spi_stream->write(nic->spi_obj,"\r\n",strlen("\r\n"),&errcode);
+	sendCmd(nic,cmd,strlen(cmd));
+	sendCmd(nic,timeout_str,strlen(timeout_str));
+	sendCmd(nic,"\r\n",strlen("\r\n"));
     return recvFind(nic,"OK",1000);
 }
 
@@ -1117,9 +1260,9 @@ bool sATCIPMODE(esp8285_obj* nic,char mode)
 	itoa(mode, mode_str, 10);
 	const mp_stream_p_t * spi_stream = mp_get_stream(nic->spi_obj);	
 	rx_empty(nic);
-	spi_stream->write(nic->spi_obj,cmd,strlen(cmd),&errcode);
-	spi_stream->write(nic->spi_obj,mode_str,strlen(mode_str),&errcode);
-    spi_stream->write(nic->spi_obj,"\r\n",strlen("\r\n"),&errcode);
+	sendCmd(nic,cmd,strlen(cmd));
+	sendCmd(nic,mode_str,strlen(mode_str));
+	sendCmd(nic,"\r\n",strlen("\r\n"));
     return recvFind(nic,"OK",1000);
 }
 
@@ -1129,11 +1272,11 @@ bool sATCIPDOMAIN(esp8285_obj* nic, const char* domain_name, uint32_t timeout)
 	const char* cmd = "AT+CIPDOMAIN=";
 	const mp_stream_p_t * spi_stream = mp_get_stream(nic->spi_obj);
 	rx_empty(nic);
-	spi_stream->write(nic->spi_obj,cmd,strlen(cmd),&errcode);
-	spi_stream->write(nic->spi_obj,"\"",strlen("\""),&errcode);
-	spi_stream->write(nic->spi_obj,domain_name,strlen(domain_name),&errcode);
-	spi_stream->write(nic->spi_obj,"\"",strlen("\""),&errcode);
-	spi_stream->write(nic->spi_obj,"\r\n",strlen("\r\n"),&errcode);  
+	sendCmd(nic,cmd,strlen(cmd));
+	sendCmd(nic,"\"",strlen("\""));
+	sendCmd(nic,domain_name,strlen(domain_name));
+	sendCmd(nic,"\"",strlen("\""));
+	sendCmd(nic,"\r\n",strlen("\r\n"));
     return recvFind(nic,"OK",timeout);
 }
 
@@ -1143,8 +1286,8 @@ bool qATCIPSTA_CUR(esp8285_obj* nic)
 	const char* cmd = "AT+CIPSTA?";
 	const mp_stream_p_t * spi_stream = mp_get_stream(nic->spi_obj);
 	rx_empty(nic);
-	spi_stream->write(nic->spi_obj,cmd,strlen(cmd),&errcode);
-	spi_stream->write(nic->spi_obj,"\r\n",strlen("\r\n"),&errcode);
+	sendCmd(nic,cmd,strlen(cmd));
+	sendCmd(nic,"\r\n",strlen("\r\n"));
 	return recvFind(nic,"OK",1000);
 }
 bool sATCIPSTA_CUR(esp8285_obj* nic, const char* ip,char* gateway,char* netmask)
@@ -1157,23 +1300,23 @@ bool sATCIPSTA_CUR(esp8285_obj* nic, const char* ip,char* gateway,char* netmask)
 	{
 		return false;
 	}
-	spi_stream->write(nic->spi_obj,cmd,strlen(cmd),&errcode);
-	spi_stream->write(nic->spi_obj,ip,strlen(ip),&errcode);
+	sendCmd(nic,cmd,strlen(cmd));
+	sendCmd(nic,ip,strlen(ip));
 	if(NULL == gateway)
 	{
-		spi_stream->write(nic->spi_obj,"\r\n",strlen("\r\n"),&errcode);
+		sendCmd(nic,"\r\n",strlen("\r\n"));
 		return recvFind(nic,"OK",1000);
 	}
-	spi_stream->write(nic->spi_obj,",",strlen(","),&errcode);
-	spi_stream->write(nic->spi_obj,gateway,strlen(gateway),&errcode);
+	sendCmd(nic,",",strlen(","));
+	sendCmd(nic,gateway,strlen(gateway));
 	if(NULL == netmask)
 	{
-		spi_stream->write(nic->spi_obj,"\r\n",strlen("\r\n"),&errcode);
+		sendCmd(nic,"\r\n",strlen("\r\n"));
 		return recvFind(nic,"OK",1000);
 	}
-	spi_stream->write(nic->spi_obj,",",strlen(","),&errcode);
-	spi_stream->write(nic->spi_obj,netmask,strlen(netmask),&errcode);
-	spi_stream->write(nic->spi_obj,"\r\n",strlen("\r\n"),&errcode);
+	sendCmd(nic,",",strlen(","));
+	sendCmd(nic,netmask,strlen(netmask));
+	sendCmd(nic,"\r\n",strlen("\r\n"));
 	return recvFind(nic,"OK",1000);
 }
 
@@ -1183,8 +1326,8 @@ bool qATCWJAP_CUR(esp8285_obj* nic)
 	const char* cmd = "AT+CWJAP?";
 	const mp_stream_p_t * spi_stream = mp_get_stream(nic->spi_obj);
 	rx_empty(nic);
-	spi_stream->write(nic->spi_obj,cmd,strlen(cmd),&errcode);
-	spi_stream->write(nic->spi_obj,"\r\n",strlen("\r\n"),&errcode);
+	sendCmd(nic,cmd,strlen(cmd));
+	sendCmd(nic,"\r\n",strlen("\r\n"));
 	return recvFind(nic,"OK",1000);
 }
 
@@ -1196,7 +1339,7 @@ bool eINIT(esp8285_obj* nic, int mode)
 	init_flag = init_flag && disableMUX(nic);
 	init_flag = init_flag && sATCIPMODE(nic,0);
 	init_flag = init_flag && setOprToStation(nic, mode);
-    if(mode & SOFTAP_MODE){
+   if(mode & SOFTAP_MODE){
 		init_flag = init_flag && enableMUX(nic);
 	}
 	else{
@@ -1205,6 +1348,7 @@ bool eINIT(esp8285_obj* nic, int mode)
 	if(!mode & SOFTAP_MODE){
 		init_flag = init_flag && leaveAP(nic);
 	}
+	mp_printf(MP_PYTHON_PRINTER, "eINIT end:%d\n",init_flag);
 	return init_flag;
 }
 
@@ -1215,8 +1359,8 @@ bool eATCWLAP(esp8285_obj* nic)
     const char cmd[] = {"AT+CWLAP"};
 
     rx_empty(nic);
-    spi_stream->write(nic->spi_obj,cmd,strlen(cmd),&errcode);
-	spi_stream->write(nic->spi_obj,"\r\n",strlen("\r\n"),&errcode);
+	sendCmd(nic,cmd,strlen(cmd));
+	sendCmd(nic,"\r\n",strlen("\r\n"));
 
     if (recvString_1(nic, "\r\n\r\nOK", 10000) != NULL)
         return true;
@@ -1228,11 +1372,10 @@ bool eATCWLAP_Start(esp8285_obj* nic)
 {
     int errcode = 0;
     const mp_stream_p_t * spi_stream = mp_get_stream(nic->spi_obj);
-    const char cmd[] = {"AT+CWLAP"};
+    const char cmd[] = {"AT+CWLAP\r\n"};
 
     rx_empty(nic);
-    spi_stream->write(nic->spi_obj,cmd,strlen(cmd),&errcode);
-	spi_stream->write(nic->spi_obj,"\r\n",strlen("\r\n"),&errcode);  
+	sendCmd(nic,cmd,strlen(cmd));
     return true;
 }
 
@@ -1255,8 +1398,8 @@ bool qATCWSAP(esp8285_obj* nic)
 	const char* cmd = "AT+CWSAP?";
 	const mp_stream_p_t * spi_stream = mp_get_stream(nic->spi_obj);
 	rx_empty(nic);
-	spi_stream->write(nic->spi_obj,cmd,strlen(cmd),&errcode);
-	spi_stream->write(nic->spi_obj,"\r\n",strlen("\r\n"),&errcode);
+	sendCmd(nic,cmd,strlen(cmd));
+	sendCmd(nic,"\r\n",strlen("\r\n"));
 	return recvFind(nic,"OK",1000);
 }
 bool eATCWSAP(esp8285_obj* nic, const char* ssid, const char* key, int chl, int ecn)
@@ -1274,8 +1417,8 @@ bool eATCWSAP(esp8285_obj* nic, const char* ssid, const char* key, int chl, int 
     memset(nic->buffer.buffer,0,ESP8285_BUF_SIZE);
 
     sprintf(ap_cmd, "AT+CWSAP=\"%s\",\"%s\",%d,%d", ssid, key, chl, ecn);
-    spi_stream->write(nic->spi_obj,ap_cmd, strlen(ap_cmd), &errcode);
-    spi_stream->write(nic->spi_obj, "\r\n", strlen("\r\n"), &errcode);
+	sendCmd(nic,ap_cmd,strlen(ap_cmd));
+	sendCmd(nic,"\r\n",strlen("\r\n"));
 
     if (recvString_1(nic, "\r\nOK", 3000) == NULL)
     {
@@ -1299,8 +1442,8 @@ bool sATCWSAP(esp8285_obj* nic, const char* ssid, const char* key, int chl, int 
     memset(nic->buffer.buffer,0,ESP8285_BUF_SIZE);
 
     sprintf(ap_cmd, "AT+CWSAP=\"%s\",\"%s\",%d,%d,%d,%d", ssid, key, chl, ecn, max_conn, ssid_hidden);
-    spi_stream->write(nic->spi_obj,ap_cmd, strlen(ap_cmd), &errcode);
-    spi_stream->write(nic->spi_obj, "\r\n", strlen("\r\n"), &errcode);
+	sendCmd(nic,ap_cmd,strlen(ap_cmd));
+	sendCmd(nic,"\r\n",strlen("\r\n"));
 
     if (recvString_1(nic, "\r\nOK", 3000) == NULL)
     {
@@ -1316,10 +1459,10 @@ bool sCIPSTAMAC(esp8285_obj* nic, const char* mac)
     int8_t find;
 	const mp_stream_p_t * spi_stream = mp_get_stream(nic->spi_obj);	
     rx_empty(nic);	
-	spi_stream->write(nic->spi_obj,cmd,strlen(cmd),&errcode);
-	spi_stream->write(nic->spi_obj,mac,strlen(mac),&errcode);
-	spi_stream->write(nic->spi_obj,"\"",strlen("\""),&errcode);
-	spi_stream->write(nic->spi_obj,"\r\n",strlen("\r\n"),&errcode);
+	sendCmd(nic,cmd,strlen(cmd));
+	sendCmd(nic,mac,strlen(mac));
+	sendCmd(nic,"\"",strlen("\""));
+	sendCmd(nic,"\r\n",strlen("\r\n"));
     if(recvString_2(nic,"OK", "ERROR", 10000, &find) != NULL && find==0 )
         return true;
     return false;
@@ -1331,10 +1474,10 @@ bool sCIPAPMAC(esp8285_obj* nic, const char* mac)
     int8_t find;
 	const mp_stream_p_t * spi_stream = mp_get_stream(nic->spi_obj);	
     rx_empty(nic);	
-	spi_stream->write(nic->spi_obj,cmd,strlen(cmd),&errcode);
-	spi_stream->write(nic->spi_obj,mac,strlen(mac),&errcode);
-	spi_stream->write(nic->spi_obj,"\"",strlen("\""),&errcode);
-	spi_stream->write(nic->spi_obj,"\r\n",strlen("\r\n"),&errcode);
+	sendCmd(nic,cmd,strlen(cmd));
+	sendCmd(nic,mac,strlen(mac));
+	sendCmd(nic,"\"",strlen("\""));
+	sendCmd(nic,"\r\n",strlen("\r\n"));
     if(recvString_2(nic,"OK", "ERROR", 10000, &find) != NULL && find==0 )
         return true;
     return false;
@@ -1350,7 +1493,7 @@ bool qCIPSTAMAC(esp8285_obj* nic,char* mac)
         return false;
     }
     rx_empty(nic);
-	spi_stream->write(nic->spi_obj,cmd,strlen(cmd),&errcode);
+	sendCmd(nic,cmd,strlen(cmd));
     ret = recvFind(nic,"OK",1000); 
     cur = strstr((char*)nic->buffer.buffer, "+CIPSTAMAC:");
 	sscanf(cur, "+CIPSTAMAC:\"%[^\"]\"", mac);
@@ -1371,7 +1514,7 @@ bool qCIPAPMAC(esp8285_obj* nic,char* mac)
         return false;
     }
     rx_empty(nic);
-	spi_stream->write(nic->spi_obj,cmd,strlen(cmd),&errcode);
+	sendCmd(nic,cmd,strlen(cmd));
     ret = recvFind(nic,"OK",1000); 
     cur = strstr((char*)nic->buffer.buffer, "+CIPAPMAC:");
 	sscanf(cur, "+CIPAPMAC:\"%[^\"]\"", mac);
@@ -1388,10 +1531,10 @@ bool sCWHOSTNAME(esp8285_obj* nic, const char* ssid)
     int8_t find;
 	const mp_stream_p_t * spi_stream = mp_get_stream(nic->spi_obj);	
     rx_empty(nic);	
-	spi_stream->write(nic->spi_obj,cmd,strlen(cmd),&errcode);
-	spi_stream->write(nic->spi_obj,ssid,strlen(ssid),&errcode);
-    spi_stream->write(nic->spi_obj,"\"",strlen("\""),&errcode);
-	spi_stream->write(nic->spi_obj,"\r\n",strlen("\r\n"),&errcode);
+	sendCmd(nic,cmd,strlen(cmd));
+	sendCmd(nic,ssid,strlen(ssid));
+	sendCmd(nic,"\"",strlen("\""));
+	sendCmd(nic,"\r\n",strlen("\r\n"));
     if(recvString_2(nic,"OK", "ERROR", 10000, &find) != NULL && find==0 )
         return true;
     return false;
@@ -1407,7 +1550,7 @@ bool qCWHOSTNAME(esp8285_obj* nic,char* ssid)
         return false;
     }
     rx_empty(nic);
-	spi_stream->write(nic->spi_obj,cmd,strlen(cmd),&errcode);
+	sendCmd(nic,cmd,strlen(cmd));
     ret = recvFind(nic,"OK",1000); 
     cur = strstr((char*)nic->buffer.buffer, "+CWHOSTNAME:");
 	sscanf(cur, "+CWHOSTNAME:%s", ssid);
@@ -1427,8 +1570,8 @@ bool sMQTTUSERCFG(esp8285_obj* nic,int LinkID, int scheme, const char* client_id
     memset(nic->buffer.buffer,0,ESP8285_BUF_SIZE);
 
     sprintf(mqtt_cmd, "AT+MQTTUSERCFG=%d,%d,\"%s\",\"%s\",\"%s\",%d,%d,\"%s\"", LinkID, scheme, client_id, username, password, cert_key_ID, CA_ID, path);
-    spi_stream->write(nic->spi_obj,mqtt_cmd, strlen(mqtt_cmd), &errcode);
-    spi_stream->write(nic->spi_obj, "\r\n", strlen("\r\n"), &errcode);
+	sendCmd(nic,mqtt_cmd,strlen(mqtt_cmd));
+	sendCmd(nic,"\r\n",strlen("\r\n"));
 
     if (recvString_1(nic, "\r\nOK", 3000) == NULL)
     {
@@ -1447,8 +1590,8 @@ bool sMQTTUSERNAME(esp8285_obj* nic,int LinkID, int username)
     memset(nic->buffer.buffer,0,ESP8285_BUF_SIZE);
 
     sprintf(mqtt_cmd, "AT+MQTTUSERNAME=%d,\"%s\"", LinkID, username);
-    spi_stream->write(nic->spi_obj,mqtt_cmd, strlen(mqtt_cmd), &errcode);
-    spi_stream->write(nic->spi_obj, "\r\n", strlen("\r\n"), &errcode);
+	sendCmd(nic,mqtt_cmd,strlen(mqtt_cmd));
+	sendCmd(nic,"\r\n",strlen("\r\n"));
 
     if (recvString_1(nic, "\r\nOK", 3000) == NULL)
     {
@@ -1467,8 +1610,8 @@ bool sMQTTPASSWORD(esp8285_obj* nic,int LinkID, int password)
     memset(nic->buffer.buffer,0,ESP8285_BUF_SIZE);
 
     sprintf(mqtt_cmd, "AT+MQTTUSERNAME=%d,\"%s\"", LinkID, password);
-    spi_stream->write(nic->spi_obj,mqtt_cmd, strlen(mqtt_cmd), &errcode);
-    spi_stream->write(nic->spi_obj, "\r\n", strlen("\r\n"), &errcode);
+	sendCmd(nic,mqtt_cmd,strlen(mqtt_cmd));
+	sendCmd(nic,"\r\n",strlen("\r\n"));
 
     if (recvString_1(nic, "\r\nOK", 3000) == NULL)
     {
@@ -1486,8 +1629,8 @@ bool sMQTTCONNCFG(esp8285_obj* nic,int LinkID, int keepalive, int disable_clean_
     memset(nic->buffer.buffer,0,ESP8285_BUF_SIZE);
 
     sprintf(mqtt_cmd, "AT+MQTTCONNCFG=%d,%d,%d,\"%s\",\"%s\",%d,%d", LinkID, keepalive, disable_clean_session, lwt_topic, wt_msg, lwt_qos, lwt_retain);
-    spi_stream->write(nic->spi_obj,mqtt_cmd, strlen(mqtt_cmd), &errcode);
-    spi_stream->write(nic->spi_obj, "\r\n", strlen("\r\n"), &errcode);
+	sendCmd(nic,mqtt_cmd,strlen(mqtt_cmd));
+	sendCmd(nic,"\r\n",strlen("\r\n"));
 
     if (recvString_1(nic, "\r\nOK", 3000) == NULL)
     {
@@ -1506,8 +1649,8 @@ bool sMQTTCONN(esp8285_obj* nic,int LinkID, const char* host, int port, int reco
     memset(nic->buffer.buffer,0,ESP8285_BUF_SIZE);
 
     sprintf(mqtt_cmd, "AT+MQTTCONN=%d,\"%s\",%d,%d", LinkID, host, port, reconnect);
-    spi_stream->write(nic->spi_obj,mqtt_cmd, strlen(mqtt_cmd), &errcode);
-    spi_stream->write(nic->spi_obj, "\r\n", strlen("\r\n"), &errcode);
+	sendCmd(nic,mqtt_cmd,strlen(mqtt_cmd));
+	sendCmd(nic,"\r\n",strlen("\r\n"));
 
     if (recvString_1(nic, "\r\nOK", 3000) == NULL)
     {
@@ -1521,8 +1664,8 @@ bool qMQTTCONN(esp8285_obj* nic)
 	const char* cmd = "AT+MQTTCONN?";
 	const mp_stream_p_t * spi_stream = mp_get_stream(nic->spi_obj);
 	rx_empty(nic);
-	spi_stream->write(nic->spi_obj,cmd,strlen(cmd),&errcode);
-	spi_stream->write(nic->spi_obj,"\r\n",strlen("\r\n"),&errcode);
+	sendCmd(nic,cmd,strlen(cmd));
+	sendCmd(nic,"\r\n",strlen("\r\n"));
 	return recvFind(nic,"OK",1000);
 }
 bool sMQTTPUB(esp8285_obj*nic, uint32_t LinkID,  const char* topic,  const char* data, uint32_t qos, uint32_t retain)
@@ -1535,8 +1678,8 @@ bool sMQTTPUB(esp8285_obj*nic, uint32_t LinkID,  const char* topic,  const char*
     memset(nic->buffer.buffer,0,ESP8285_BUF_SIZE);
 
     sprintf(mqtt_cmd, "AT+MQTTPUB=%d,\"%s\",\"%s\",%d,%d", LinkID, topic, data, qos, retain);
-    spi_stream->write(nic->spi_obj,mqtt_cmd, strlen(mqtt_cmd), &errcode);
-    spi_stream->write(nic->spi_obj, "\r\n", strlen("\r\n"), &errcode);
+	sendCmd(nic,mqtt_cmd,strlen(mqtt_cmd));
+	sendCmd(nic,"\r\n",strlen("\r\n"));
 
     if (recvString_1(nic, "\r\nOK", 3000) == NULL)
     {
@@ -1552,8 +1695,8 @@ bool qMQTTSUB(esp8285_obj*nic, uint32_t LinkID, const char* topic, uint32_t qos)
 
     rx_empty(nic);
     sprintf(mqtt_cmd, "AT+MQTTSUB=%d,\"%s\",%d", LinkID, topic, qos);
-    spi_stream->write(nic->spi_obj,mqtt_cmd, strlen(mqtt_cmd), &errcode);
-    spi_stream->write(nic->spi_obj, "\r\n", strlen("\r\n"), &errcode);
+	sendCmd(nic,mqtt_cmd,strlen(mqtt_cmd));
+	sendCmd(nic,"\r\n",strlen("\r\n"));
     return recvFind(nic,"OK",1000);
 }
 bool eMQTTSUB_Start(esp8285_obj* nic)
@@ -1562,8 +1705,8 @@ bool eMQTTSUB_Start(esp8285_obj* nic)
 	const char* cmd = "AT+MQTTSUB?";
 	const mp_stream_p_t * spi_stream = mp_get_stream(nic->spi_obj);
 	rx_empty(nic);
-	spi_stream->write(nic->spi_obj,cmd,strlen(cmd),&errcode);
-	spi_stream->write(nic->spi_obj,"\r\n",strlen("\r\n"),&errcode);
+	sendCmd(nic,cmd,strlen(cmd));
+	sendCmd(nic,"\r\n",strlen("\r\n"));
 	return true;
 }
 bool eMQTTSUB_Get(esp8285_obj* nic, bool* end)
@@ -1588,8 +1731,8 @@ bool sMQTTUNSUB(esp8285_obj*nic, uint32_t LinkID,  const char* topic)
     memset(nic->buffer.buffer,0,ESP8285_BUF_SIZE);
 
     sprintf(mqtt_cmd, "AT+MQTTUNSUB=%d,\"%s\"", LinkID, topic);
-    spi_stream->write(nic->spi_obj,mqtt_cmd, strlen(mqtt_cmd), &errcode);
-    spi_stream->write(nic->spi_obj, "\r\n", strlen("\r\n"), &errcode);
+	sendCmd(nic,mqtt_cmd,strlen(mqtt_cmd));
+	sendCmd(nic,"\r\n",strlen("\r\n"));
 
     if (recvString_1(nic, "\r\nOK", 3000) == NULL)
     {
@@ -1607,8 +1750,8 @@ bool sMQTTCLEAN(esp8285_obj*nic, uint32_t LinkID)
     memset(nic->buffer.buffer,0,ESP8285_BUF_SIZE);
 
     sprintf(mqtt_cmd, "AT+MQTTCLEAN=%d", LinkID);
-    spi_stream->write(nic->spi_obj,mqtt_cmd, strlen(mqtt_cmd), &errcode);
-    spi_stream->write(nic->spi_obj, "\r\n", strlen("\r\n"), &errcode);
+	sendCmd(nic,mqtt_cmd,strlen(mqtt_cmd));
+	sendCmd(nic,"\r\n",strlen("\r\n"));
 
     if (recvString_1(nic, "\r\nOK", 3000) == NULL)
     {

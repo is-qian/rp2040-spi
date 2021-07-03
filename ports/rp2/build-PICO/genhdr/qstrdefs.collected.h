@@ -526,8 +526,6 @@ Q(WDT_RESET)
 
 Q(WLAN_SPI)
 
-Q(WLAN_UART)
-
 Q(ZeroDivisionError)
 
 Q(ZeroDivisionError)
@@ -1000,6 +998,8 @@ Q(active)
 
 Q(active)
 
+Q(active)
+
 Q(add)
 
 Q(add)
@@ -1061,6 +1061,10 @@ Q(atan)
 Q(atan2)
 
 Q(atanh)
+
+Q(authmode)
+
+Q(authmode)
 
 Q(authmode)
 
@@ -1156,6 +1160,10 @@ Q(channel)
 
 Q(channel)
 
+Q(channel)
+
+Q(channel)
+
 Q(chdir)
 
 Q(chdir)
@@ -1217,6 +1225,10 @@ Q(complex)
 Q(complex)
 
 Q(config)
+
+Q(config)
+
+Q(connect)
 
 Q(connect)
 
@@ -1328,6 +1340,8 @@ Q(disconnect)
 
 Q(disconnect)
 
+Q(disconnect)
+
 Q(divmod)
 
 Q(doc)
@@ -1377,6 +1391,10 @@ Q(errno)
 Q(errorcode)
 
 Q(esp8285)
+
+Q(essid)
+
+Q(essid)
 
 Q(essid)
 
@@ -1586,9 +1604,17 @@ Q(hidden)
 
 Q(hidden)
 
+Q(hidden)
+
+Q(hidden)
+
 Q(high)
 
 Q(hline)
+
+Q(hostname)
+
+Q(hostname)
 
 Q(hostname)
 
@@ -1605,6 +1631,8 @@ Q(id)
 Q(id)
 
 Q(idle)
+
+Q(ifconfig)
 
 Q(ifconfig)
 
@@ -1696,6 +1724,8 @@ Q(isclose)
 
 Q(isconnected)
 
+Q(isconnected)
+
 Q(isdigit)
 
 Q(isdigit)
@@ -1761,6 +1791,8 @@ Q(join)
 Q(kbd_intr)
 
 Q(keepends)
+
+Q(key)
 
 Q(key)
 
@@ -1841,6 +1873,10 @@ Q(lsr)
 Q(lstrip)
 
 Q(lstrip)
+
+Q(mac)
+
+Q(mac)
 
 Q(mac)
 
@@ -2063,6 +2099,8 @@ Q(parity)
 Q(partition)
 
 Q(partition)
+
+Q(password)
 
 Q(password)
 
@@ -2330,6 +2368,8 @@ Q(reset)
 
 Q(reset)
 
+Q(reset)
+
 Q(reset_cause)
 
 Q(restart)
@@ -2383,6 +2423,8 @@ Q(rx)
 Q(rx_fifo)
 
 Q(rxbuf)
+
+Q(scan)
 
 Q(scan)
 
@@ -2506,6 +2548,8 @@ Q(sqrt)
 
 Q(ssid)
 
+Q(ssid)
+
 Q(stack_size)
 
 Q(stack_use)
@@ -2541,6 +2585,8 @@ Q(state_machine)
 Q(staticmethod)
 
 Q(staticmethod)
+
+Q(status)
 
 Q(status)
 

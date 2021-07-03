@@ -6891,33 +6891,6 @@ mod_wifi_spi.c.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/firmware.dir/build.make CMakeFiles/firmware.dir/mod_wifi_spi.c.s
 .PHONY : mod_wifi_spi.c.s
 
-mod_wifi_uart.obj: mod_wifi_uart.c.obj
-
-.PHONY : mod_wifi_uart.obj
-
-# target to build an object file
-mod_wifi_uart.c.obj:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/firmware.dir/build.make CMakeFiles/firmware.dir/mod_wifi_uart.c.obj
-.PHONY : mod_wifi_uart.c.obj
-
-mod_wifi_uart.i: mod_wifi_uart.c.i
-
-.PHONY : mod_wifi_uart.i
-
-# target to preprocess a source file
-mod_wifi_uart.c.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/firmware.dir/build.make CMakeFiles/firmware.dir/mod_wifi_uart.c.i
-.PHONY : mod_wifi_uart.c.i
-
-mod_wifi_uart.s: mod_wifi_uart.c.s
-
-.PHONY : mod_wifi_uart.s
-
-# target to generate assembly for a file
-mod_wifi_uart.c.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/firmware.dir/build.make CMakeFiles/firmware.dir/mod_wifi_uart.c.s
-.PHONY : mod_wifi_uart.c.s
-
 modmachine.obj: modmachine.c.obj
 
 .PHONY : modmachine.obj
@@ -7295,33 +7268,6 @@ wifi_spi.s: wifi_spi.c.s
 wifi_spi.c.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/firmware.dir/build.make CMakeFiles/firmware.dir/wifi_spi.c.s
 .PHONY : wifi_spi.c.s
-
-wifi_uart.obj: wifi_uart.c.obj
-
-.PHONY : wifi_uart.obj
-
-# target to build an object file
-wifi_uart.c.obj:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/firmware.dir/build.make CMakeFiles/firmware.dir/wifi_uart.c.obj
-.PHONY : wifi_uart.c.obj
-
-wifi_uart.i: wifi_uart.c.i
-
-.PHONY : wifi_uart.i
-
-# target to preprocess a source file
-wifi_uart.c.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/firmware.dir/build.make CMakeFiles/firmware.dir/wifi_uart.c.i
-.PHONY : wifi_uart.c.i
-
-wifi_uart.s: wifi_uart.c.s
-
-.PHONY : wifi_uart.s
-
-# target to generate assembly for a file
-wifi_uart.c.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/firmware.dir/build.make CMakeFiles/firmware.dir/wifi_uart.c.s
-.PHONY : wifi_uart.c.s
 
 # Help Target
 help:
@@ -8080,9 +8026,6 @@ help:
 	@echo "... mod_wifi_spi.obj"
 	@echo "... mod_wifi_spi.i"
 	@echo "... mod_wifi_spi.s"
-	@echo "... mod_wifi_uart.obj"
-	@echo "... mod_wifi_uart.i"
-	@echo "... mod_wifi_uart.s"
 	@echo "... modmachine.obj"
 	@echo "... modmachine.i"
 	@echo "... modmachine.s"
@@ -8125,9 +8068,6 @@ help:
 	@echo "... wifi_spi.obj"
 	@echo "... wifi_spi.i"
 	@echo "... wifi_spi.s"
-	@echo "... wifi_uart.obj"
-	@echo "... wifi_uart.i"
-	@echo "... wifi_uart.s"
 .PHONY : help
 
 

@@ -98,8 +98,6 @@ set(MICROPY_SOURCE_PORT
     modumqtt.c
     wifi_spi.c
     mod_wifi_spi.c
-    wifi_uart.c
-    mod_wifi_uart.c
     buffer.c
     modrp2.c
     moduos.c
@@ -132,8 +130,6 @@ set(MICROPY_SOURCE_QSTR
     ${PROJECT_SOURCE_DIR}/modumqtt.c
     ${PROJECT_SOURCE_DIR}/wifi_spi.c
     ${PROJECT_SOURCE_DIR}/mod_wifi_spi.c
-    ${PROJECT_SOURCE_DIR}/wifi_uart.c
-    ${PROJECT_SOURCE_DIR}/mod_wifi_uart.c
     ${PROJECT_SOURCE_DIR}/buffer.c	
     ${PROJECT_SOURCE_DIR}/modrp2.c
     ${PROJECT_SOURCE_DIR}/moduos.c

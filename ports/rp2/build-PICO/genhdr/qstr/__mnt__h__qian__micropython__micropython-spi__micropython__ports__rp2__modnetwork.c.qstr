@@ -1,7 +1,6 @@
 Q(__name__)
 Q(network)
 Q(WLAN_SPI)
-Q(WLAN_UART)
 Q(route)
 Q(STA_IF)
 Q(AP_IF)

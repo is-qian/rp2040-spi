@@ -10,9 +10,9 @@ be611016c676f540f80eb3bb959a07b2 elf2uf2/src/ELF2UF2Build-stamp/ELF2UF2Build-ins
 1d93e0ac906dab4a8ae9e0d7cd54f908 elf2uf2/src/ELF2UF2Build-stamp/ELF2UF2Build-patch
 d4cb22f28161372d30d903e1bb7e52b9 elf2uf2/src/ELF2UF2Build-stamp/ELF2UF2Build-update
 93823803f6d6e660e4d9be3298fb5b73 frozen_content.c
-99b4b0ce1c9fe92387b45f3de97534c9 genhdr/moduledefs.h
+a38f5f23d725381756fd8b078c8ebac1 genhdr/moduledefs.h
 8599094e9f0ef599e724b808eddb38ad genhdr/mpversion.h
-2fffa9e838941f3cacd4a7fa9c4673fe genhdr/qstr.i.last
+8841781bf97e3191456a17c88f04e165 genhdr/qstr.i.last
 fc9b29b0a5ef134de7407bae48343647 genhdr/qstr.split
 e216ce211f7c2d908b55d64d193c2b8b genhdr/qstrdefs.collected.h
 3310358ccd803290f8ec847a56b84866 genhdr/qstrdefs.generated.h

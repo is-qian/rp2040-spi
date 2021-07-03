@@ -33,13 +33,13 @@
 #include "hardware/spi.h"
 #include "hardware/dma.h"
 
-#define DEFAULT_SPI_BAUDRATE    (1000000)
+#define DEFAULT_SPI_BAUDRATE    (200000)
 #define DEFAULT_SPI_POLARITY    (0)
 #define DEFAULT_SPI_PHASE       (0)
 #define DEFAULT_SPI_BITS        (8)
 #define DEFAULT_SPI_FIRSTBIT    (SPI_MSB_FIRST)
-#define DEFAULT_SPI0_SCK        (6)
-#define DEFAULT_SPI0_MOSI       (7)
+#define DEFAULT_SPI0_SCK        (2)
+#define DEFAULT_SPI0_MOSI       (3)
 #define DEFAULT_SPI0_MISO       (4)
 #define DEFAULT_SPI1_SCK        (10)
 #define DEFAULT_SPI1_MOSI       (11)
@@ -88,6 +88,9 @@ STATIC void machine_spi_print(const mp_print_t *print, mp_obj_t self_in, mp_prin
 
 mp_obj_t machine_spi_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *all_args) {
     enum { ARG_id, ARG_baudrate, ARG_polarity, ARG_phase, ARG_bits, ARG_firstbit, ARG_sck, ARG_mosi, ARG_miso };
+	//mp_printf(MP_PYTHON_PRINTER, "init spi1:%d  2:%d  \n",n_args,n_kw);
+	//mp_printf(MP_PYTHON_PRINTER, "data: 1:%d  2:%d\n",all_args[0],all_args[1]);
+	//mp_printf(MP_PYTHON_PRINTER, "data: 1:%d  2:%d  3:%d  4:%d  5:%d  6:%d  7:%d  8:%d  9:%d  1:%d  2:%d  3:%d  4:%d  5:%d  6:%d  7:%d  8:%d  9:%d*\\n",all_args[0],all_args[1],all_args[2],all_args[3],all_args[4],all_args[5],all_args[6],all_args[7],all_args[8],all_args[9],all_args[10],all_args[11],all_args[12],all_args[13],all_args[14],all_args[15],all_args[16],all_args[17]);
     static const mp_arg_t allowed_args[] = {
         { MP_QSTR_id,       MP_ARG_REQUIRED | MP_ARG_OBJ },
         { MP_QSTR_baudrate, MP_ARG_INT, {.u_int = DEFAULT_SPI_BAUDRATE} },

@@ -371,7 +371,6 @@ set(CMAKE_DEPENDS_CHECK_C
   "/mnt/h/qian/micropython/micropython-spi/micropython/py/vstr.c" "/mnt/h/qian/micropython/micropython-spi/micropython/ports/rp2/build-PICO/CMakeFiles/firmware.dir/mnt/h/qian/micropython/micropython-spi/micropython/py/vstr.c.obj"
   "/mnt/h/qian/micropython/micropython-spi/micropython/py/warning.c" "/mnt/h/qian/micropython/micropython-spi/micropython/ports/rp2/build-PICO/CMakeFiles/firmware.dir/mnt/h/qian/micropython/micropython-spi/micropython/py/warning.c.obj"
   "/mnt/h/qian/micropython/micropython-spi/micropython/ports/rp2/mod_wifi_spi.c" "/mnt/h/qian/micropython/micropython-spi/micropython/ports/rp2/build-PICO/CMakeFiles/firmware.dir/mod_wifi_spi.c.obj"
-  "/mnt/h/qian/micropython/micropython-spi/micropython/ports/rp2/mod_wifi_uart.c" "/mnt/h/qian/micropython/micropython-spi/micropython/ports/rp2/build-PICO/CMakeFiles/firmware.dir/mod_wifi_uart.c.obj"
   "/mnt/h/qian/micropython/micropython-spi/micropython/ports/rp2/modmachine.c" "/mnt/h/qian/micropython/micropython-spi/micropython/ports/rp2/build-PICO/CMakeFiles/firmware.dir/modmachine.c.obj"
   "/mnt/h/qian/micropython/micropython-spi/micropython/ports/rp2/modnetwork.c" "/mnt/h/qian/micropython/micropython-spi/micropython/ports/rp2/build-PICO/CMakeFiles/firmware.dir/modnetwork.c.obj"
   "/mnt/h/qian/micropython/micropython-spi/micropython/ports/rp2/modrp2.c" "/mnt/h/qian/micropython/micropython-spi/micropython/ports/rp2/build-PICO/CMakeFiles/firmware.dir/modrp2.c.obj"
@@ -386,7 +385,6 @@ set(CMAKE_DEPENDS_CHECK_C
   "/mnt/h/qian/micropython/micropython-spi/micropython/ports/rp2/tusb_port.c" "/mnt/h/qian/micropython/micropython-spi/micropython/ports/rp2/build-PICO/CMakeFiles/firmware.dir/tusb_port.c.obj"
   "/mnt/h/qian/micropython/micropython-spi/micropython/ports/rp2/uart.c" "/mnt/h/qian/micropython/micropython-spi/micropython/ports/rp2/build-PICO/CMakeFiles/firmware.dir/uart.c.obj"
   "/mnt/h/qian/micropython/micropython-spi/micropython/ports/rp2/wifi_spi.c" "/mnt/h/qian/micropython/micropython-spi/micropython/ports/rp2/build-PICO/CMakeFiles/firmware.dir/wifi_spi.c.obj"
-  "/mnt/h/qian/micropython/micropython-spi/micropython/ports/rp2/wifi_uart.c" "/mnt/h/qian/micropython/micropython-spi/micropython/ports/rp2/build-PICO/CMakeFiles/firmware.dir/wifi_uart.c.obj"
   )
 set(CMAKE_C_COMPILER_ID "GNU")
 

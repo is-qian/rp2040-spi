@@ -128,7 +128,7 @@ typedef struct _mqtt_msg
 }mqtt_msg;
 
 extern const mod_network_nic_type_t mod_network_nic_type_esp8285;
-extern const mod_network_nic_type_t mod_network_nic_type_esp8266;
+//extern const mod_network_nic_type_t mod_network_nic_type_esp8266;
 
 #endif
 

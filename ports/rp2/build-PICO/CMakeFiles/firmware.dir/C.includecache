@@ -28,6 +28,18 @@ py/mpthread.h
 pico/mutex.h
 ../pico/mutex.h
 
+/mnt/h/qian/micropython/micropython-spi/micropython/drivers/bus/spi.h
+py/mphal.h
+/mnt/h/qian/micropython/micropython-spi/micropython/drivers/bus/py/mphal.h
+
+/mnt/h/qian/micropython/micropython-spi/micropython/extmod/machine_spi.h
+py/obj.h
+/mnt/h/qian/micropython/micropython-spi/micropython/extmod/py/obj.h
+py/mphal.h
+/mnt/h/qian/micropython/micropython-spi/micropython/extmod/py/mphal.h
+drivers/bus/spi.h
+/mnt/h/qian/micropython/micropython-spi/micropython/extmod/drivers/bus/spi.h
+
 /mnt/h/qian/micropython/micropython-spi/micropython/extmod/misc.h
 stddef.h
 -
@@ -261,6 +273,8 @@ mphalport.h
 /mnt/h/qian/micropython/micropython-spi/micropython/ports/rp2/mphalport.h
 mpconfigboard.h
 /mnt/h/qian/micropython/micropython-spi/micropython/ports/rp2/mpconfigboard.h
+extmod/machine_spi.h
+/mnt/h/qian/micropython/micropython-spi/micropython/ports/rp2/extmod/machine_spi.h
 modnetwork.h
 /mnt/h/qian/micropython/micropython-spi/micropython/ports/rp2/modnetwork.h
 hardware/spi.h

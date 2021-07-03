@@ -84,7 +84,7 @@ STATIC const mp_rom_map_elem_t mp_module_network_globals_table[] = {
     
     { MP_ROM_QSTR(MP_QSTR_WLAN_SPI), MP_ROM_PTR(&mod_network_nic_type_esp8285) },
 
-    { MP_ROM_QSTR(MP_QSTR_WLAN_UART), MP_ROM_PTR(&mod_network_nic_type_esp8266) },
+    //{ MP_ROM_QSTR(MP_QSTR_WLAN_UART), MP_ROM_PTR(&mod_network_nic_type_esp8266) },
 
     { MP_ROM_QSTR(MP_QSTR_route), MP_ROM_PTR(&network_route_obj) },
 	

@@ -10687,71 +10687,6 @@ CMakeFiles/firmware.dir/mod_wifi_spi.c.obj
  generated/pico_base/pico/config_autogen.h
  generated/pico_base/pico/version.h
  genhdr/qstrdefs.generated.h
-CMakeFiles/firmware.dir/mod_wifi_uart.c.obj
- ../boards/PICO/mpconfigboard.h
- ../mpconfigport.h
- ../mphalport.h
- ../mpthreadport.h
- /mnt/h/qian/micropython/micropython-spi/micropython/extmod/misc.h
- /mnt/h/qian/micropython/micropython-spi/micropython/extmod/virtpin.h
- /mnt/h/qian/micropython/micropython-spi/micropython/lib/netutils/netutils.h
- /mnt/h/qian/micropython/micropython-spi/micropython/lib/pico-sdk/src/boards/include/boards/pico.h
- /mnt/h/qian/micropython/micropython-spi/micropython/lib/pico-sdk/src/common/pico_base/include/pico.h
- /mnt/h/qian/micropython/micropython-spi/micropython/lib/pico-sdk/src/common/pico_base/include/pico/assert.h
- /mnt/h/qian/micropython/micropython-spi/micropython/lib/pico-sdk/src/common/pico_base/include/pico/config.h
- /mnt/h/qian/micropython/micropython-spi/micropython/lib/pico-sdk/src/common/pico_base/include/pico/error.h
- /mnt/h/qian/micropython/micropython-spi/micropython/lib/pico-sdk/src/common/pico_base/include/pico/types.h
- /mnt/h/qian/micropython/micropython-spi/micropython/lib/pico-sdk/src/common/pico_binary_info/include/pico/binary_info.h
- /mnt/h/qian/micropython/micropython-spi/micropython/lib/pico-sdk/src/common/pico_binary_info/include/pico/binary_info/code.h
- /mnt/h/qian/micropython/micropython-spi/micropython/lib/pico-sdk/src/common/pico_binary_info/include/pico/binary_info/defs.h
- /mnt/h/qian/micropython/micropython-spi/micropython/lib/pico-sdk/src/common/pico_binary_info/include/pico/binary_info/structure.h
- /mnt/h/qian/micropython/micropython-spi/micropython/lib/pico-sdk/src/common/pico_sync/include/pico/lock_core.h
- /mnt/h/qian/micropython/micropython-spi/micropython/lib/pico-sdk/src/common/pico_sync/include/pico/mutex.h
- /mnt/h/qian/micropython/micropython-spi/micropython/lib/pico-sdk/src/common/pico_time/include/pico/time.h
- /mnt/h/qian/micropython/micropython-spi/micropython/lib/pico-sdk/src/rp2040/hardware_regs/include/hardware/platform_defs.h
- /mnt/h/qian/micropython/micropython-spi/micropython/lib/pico-sdk/src/rp2040/hardware_regs/include/hardware/regs/addressmap.h
- /mnt/h/qian/micropython/micropython-spi/micropython/lib/pico-sdk/src/rp2040/hardware_regs/include/hardware/regs/pads_bank0.h
- /mnt/h/qian/micropython/micropython-spi/micropython/lib/pico-sdk/src/rp2040/hardware_regs/include/hardware/regs/sio.h
- /mnt/h/qian/micropython/micropython-spi/micropython/lib/pico-sdk/src/rp2040/hardware_regs/include/hardware/regs/spi.h
- /mnt/h/qian/micropython/micropython-spi/micropython/lib/pico-sdk/src/rp2040/hardware_regs/include/hardware/regs/timer.h
- /mnt/h/qian/micropython/micropython-spi/micropython/lib/pico-sdk/src/rp2040/hardware_structs/include/hardware/structs/interp.h
- /mnt/h/qian/micropython/micropython-spi/micropython/lib/pico-sdk/src/rp2040/hardware_structs/include/hardware/structs/padsbank0.h
- /mnt/h/qian/micropython/micropython-spi/micropython/lib/pico-sdk/src/rp2040/hardware_structs/include/hardware/structs/sio.h
- /mnt/h/qian/micropython/micropython-spi/micropython/lib/pico-sdk/src/rp2040/hardware_structs/include/hardware/structs/spi.h
- /mnt/h/qian/micropython/micropython-spi/micropython/lib/pico-sdk/src/rp2040/hardware_structs/include/hardware/structs/timer.h
- /mnt/h/qian/micropython/micropython-spi/micropython/lib/pico-sdk/src/rp2_common/hardware_base/include/hardware/address_mapped.h
- /mnt/h/qian/micropython/micropython-spi/micropython/lib/pico-sdk/src/rp2_common/hardware_gpio/include/hardware/gpio.h
- /mnt/h/qian/micropython/micropython-spi/micropython/lib/pico-sdk/src/rp2_common/hardware_spi/include/hardware/spi.h
- /mnt/h/qian/micropython/micropython-spi/micropython/lib/pico-sdk/src/rp2_common/hardware_sync/include/hardware/sync.h
- /mnt/h/qian/micropython/micropython-spi/micropython/lib/pico-sdk/src/rp2_common/hardware_timer/include/hardware/timer.h
- /mnt/h/qian/micropython/micropython-spi/micropython/lib/pico-sdk/src/rp2_common/pico_platform/include/pico/platform.h
- /mnt/h/qian/micropython/micropython-spi/micropython/ports/rp2/buffer.h
- /mnt/h/qian/micropython/micropython-spi/micropython/ports/rp2/mod_wifi_uart.c
- /mnt/h/qian/micropython/micropython-spi/micropython/ports/rp2/modmachine.h
- /mnt/h/qian/micropython/micropython-spi/micropython/ports/rp2/modnetwork.h
- /mnt/h/qian/micropython/micropython-spi/micropython/ports/rp2/wifi_uart.h
- /mnt/h/qian/micropython/micropython-spi/micropython/py/misc.h
- /mnt/h/qian/micropython/micropython-spi/micropython/py/mpconfig.h
- /mnt/h/qian/micropython/micropython-spi/micropython/py/mperrno.h
- /mnt/h/qian/micropython/micropython-spi/micropython/py/mphal.h
- /mnt/h/qian/micropython/micropython-spi/micropython/py/mpprint.h
- /mnt/h/qian/micropython/micropython-spi/micropython/py/mpstate.h
- /mnt/h/qian/micropython/micropython-spi/micropython/py/mpthread.h
- /mnt/h/qian/micropython/micropython-spi/micropython/py/nlr.h
- /mnt/h/qian/micropython/micropython-spi/micropython/py/obj.h
- /mnt/h/qian/micropython/micropython-spi/micropython/py/objexcept.h
- /mnt/h/qian/micropython/micropython-spi/micropython/py/objlist.h
- /mnt/h/qian/micropython/micropython-spi/micropython/py/objstr.h
- /mnt/h/qian/micropython/micropython-spi/micropython/py/objtuple.h
- /mnt/h/qian/micropython/micropython-spi/micropython/py/pystack.h
- /mnt/h/qian/micropython/micropython-spi/micropython/py/qstr.h
- /mnt/h/qian/micropython/micropython-spi/micropython/py/ringbuf.h
- /mnt/h/qian/micropython/micropython-spi/micropython/py/runtime.h
- /mnt/h/qian/micropython/micropython-spi/micropython/py/runtime0.h
- /mnt/h/qian/micropython/micropython-spi/micropython/py/stream.h
- generated/pico_base/pico/config_autogen.h
- generated/pico_base/pico/version.h
- genhdr/qstrdefs.generated.h
 CMakeFiles/firmware.dir/modmachine.c.obj
  ../boards/PICO/mpconfigboard.h
  ../mpconfigport.h
@@ -11563,6 +11498,8 @@ CMakeFiles/firmware.dir/wifi_spi.c.obj
  ../boards/PICO/mpconfigboard.h
  ../mpconfigport.h
  ../mpthreadport.h
+ /mnt/h/qian/micropython/micropython-spi/micropython/drivers/bus/spi.h
+ /mnt/h/qian/micropython/micropython-spi/micropython/extmod/machine_spi.h
  /mnt/h/qian/micropython/micropython-spi/micropython/extmod/misc.h
  /mnt/h/qian/micropython/micropython-spi/micropython/extmod/virtpin.h
  /mnt/h/qian/micropython/micropython-spi/micropython/lib/netutils/netutils.h
@@ -11602,74 +11539,6 @@ CMakeFiles/firmware.dir/wifi_spi.c.obj
  /mnt/h/qian/micropython/micropython-spi/micropython/ports/rp2/mphalport.h
  /mnt/h/qian/micropython/micropython-spi/micropython/ports/rp2/wifi_spi.c
  /mnt/h/qian/micropython/micropython-spi/micropython/ports/rp2/wifi_spi.h
- /mnt/h/qian/micropython/micropython-spi/micropython/py/misc.h
- /mnt/h/qian/micropython/micropython-spi/micropython/py/mpconfig.h
- /mnt/h/qian/micropython/micropython-spi/micropython/py/mperrno.h
- /mnt/h/qian/micropython/micropython-spi/micropython/py/mphal.h
- /mnt/h/qian/micropython/micropython-spi/micropython/py/mpprint.h
- /mnt/h/qian/micropython/micropython-spi/micropython/py/mpstate.h
- /mnt/h/qian/micropython/micropython-spi/micropython/py/mpthread.h
- /mnt/h/qian/micropython/micropython-spi/micropython/py/nlr.h
- /mnt/h/qian/micropython/micropython-spi/micropython/py/obj.h
- /mnt/h/qian/micropython/micropython-spi/micropython/py/objexcept.h
- /mnt/h/qian/micropython/micropython-spi/micropython/py/objlist.h
- /mnt/h/qian/micropython/micropython-spi/micropython/py/objstr.h
- /mnt/h/qian/micropython/micropython-spi/micropython/py/objtuple.h
- /mnt/h/qian/micropython/micropython-spi/micropython/py/pystack.h
- /mnt/h/qian/micropython/micropython-spi/micropython/py/qstr.h
- /mnt/h/qian/micropython/micropython-spi/micropython/py/ringbuf.h
- /mnt/h/qian/micropython/micropython-spi/micropython/py/runtime.h
- /mnt/h/qian/micropython/micropython-spi/micropython/py/runtime0.h
- /mnt/h/qian/micropython/micropython-spi/micropython/py/stream.h
- generated/pico_base/pico/config_autogen.h
- generated/pico_base/pico/version.h
- genhdr/qstrdefs.generated.h
-CMakeFiles/firmware.dir/wifi_uart.c.obj
- ../boards/PICO/mpconfigboard.h
- ../mpconfigport.h
- ../mpthreadport.h
- /mnt/h/qian/micropython/micropython-spi/micropython/extmod/misc.h
- /mnt/h/qian/micropython/micropython-spi/micropython/extmod/virtpin.h
- /mnt/h/qian/micropython/micropython-spi/micropython/lib/netutils/netutils.h
- /mnt/h/qian/micropython/micropython-spi/micropython/lib/pico-sdk/src/boards/include/boards/pico.h
- /mnt/h/qian/micropython/micropython-spi/micropython/lib/pico-sdk/src/common/pico_base/include/pico.h
- /mnt/h/qian/micropython/micropython-spi/micropython/lib/pico-sdk/src/common/pico_base/include/pico/assert.h
- /mnt/h/qian/micropython/micropython-spi/micropython/lib/pico-sdk/src/common/pico_base/include/pico/config.h
- /mnt/h/qian/micropython/micropython-spi/micropython/lib/pico-sdk/src/common/pico_base/include/pico/error.h
- /mnt/h/qian/micropython/micropython-spi/micropython/lib/pico-sdk/src/common/pico_base/include/pico/types.h
- /mnt/h/qian/micropython/micropython-spi/micropython/lib/pico-sdk/src/common/pico_binary_info/include/pico/binary_info.h
- /mnt/h/qian/micropython/micropython-spi/micropython/lib/pico-sdk/src/common/pico_binary_info/include/pico/binary_info/code.h
- /mnt/h/qian/micropython/micropython-spi/micropython/lib/pico-sdk/src/common/pico_binary_info/include/pico/binary_info/defs.h
- /mnt/h/qian/micropython/micropython-spi/micropython/lib/pico-sdk/src/common/pico_binary_info/include/pico/binary_info/structure.h
- /mnt/h/qian/micropython/micropython-spi/micropython/lib/pico-sdk/src/common/pico_sync/include/pico/lock_core.h
- /mnt/h/qian/micropython/micropython-spi/micropython/lib/pico-sdk/src/common/pico_sync/include/pico/mutex.h
- /mnt/h/qian/micropython/micropython-spi/micropython/lib/pico-sdk/src/common/pico_time/include/pico/time.h
- /mnt/h/qian/micropython/micropython-spi/micropython/lib/pico-sdk/src/rp2040/hardware_regs/include/hardware/platform_defs.h
- /mnt/h/qian/micropython/micropython-spi/micropython/lib/pico-sdk/src/rp2040/hardware_regs/include/hardware/regs/addressmap.h
- /mnt/h/qian/micropython/micropython-spi/micropython/lib/pico-sdk/src/rp2040/hardware_regs/include/hardware/regs/pads_bank0.h
- /mnt/h/qian/micropython/micropython-spi/micropython/lib/pico-sdk/src/rp2040/hardware_regs/include/hardware/regs/sio.h
- /mnt/h/qian/micropython/micropython-spi/micropython/lib/pico-sdk/src/rp2040/hardware_regs/include/hardware/regs/spi.h
- /mnt/h/qian/micropython/micropython-spi/micropython/lib/pico-sdk/src/rp2040/hardware_regs/include/hardware/regs/timer.h
- /mnt/h/qian/micropython/micropython-spi/micropython/lib/pico-sdk/src/rp2040/hardware_regs/include/hardware/regs/uart.h
- /mnt/h/qian/micropython/micropython-spi/micropython/lib/pico-sdk/src/rp2040/hardware_structs/include/hardware/structs/interp.h
- /mnt/h/qian/micropython/micropython-spi/micropython/lib/pico-sdk/src/rp2040/hardware_structs/include/hardware/structs/padsbank0.h
- /mnt/h/qian/micropython/micropython-spi/micropython/lib/pico-sdk/src/rp2040/hardware_structs/include/hardware/structs/sio.h
- /mnt/h/qian/micropython/micropython-spi/micropython/lib/pico-sdk/src/rp2040/hardware_structs/include/hardware/structs/spi.h
- /mnt/h/qian/micropython/micropython-spi/micropython/lib/pico-sdk/src/rp2040/hardware_structs/include/hardware/structs/timer.h
- /mnt/h/qian/micropython/micropython-spi/micropython/lib/pico-sdk/src/rp2040/hardware_structs/include/hardware/structs/uart.h
- /mnt/h/qian/micropython/micropython-spi/micropython/lib/pico-sdk/src/rp2_common/hardware_base/include/hardware/address_mapped.h
- /mnt/h/qian/micropython/micropython-spi/micropython/lib/pico-sdk/src/rp2_common/hardware_gpio/include/hardware/gpio.h
- /mnt/h/qian/micropython/micropython-spi/micropython/lib/pico-sdk/src/rp2_common/hardware_spi/include/hardware/spi.h
- /mnt/h/qian/micropython/micropython-spi/micropython/lib/pico-sdk/src/rp2_common/hardware_sync/include/hardware/sync.h
- /mnt/h/qian/micropython/micropython-spi/micropython/lib/pico-sdk/src/rp2_common/hardware_timer/include/hardware/timer.h
- /mnt/h/qian/micropython/micropython-spi/micropython/lib/pico-sdk/src/rp2_common/hardware_uart/include/hardware/uart.h
- /mnt/h/qian/micropython/micropython-spi/micropython/lib/pico-sdk/src/rp2_common/pico_platform/include/pico/platform.h
- /mnt/h/qian/micropython/micropython-spi/micropython/ports/rp2/buffer.h
- /mnt/h/qian/micropython/micropython-spi/micropython/ports/rp2/modmachine.h
- /mnt/h/qian/micropython/micropython-spi/micropython/ports/rp2/modnetwork.h
- /mnt/h/qian/micropython/micropython-spi/micropython/ports/rp2/mphalport.h
- /mnt/h/qian/micropython/micropython-spi/micropython/ports/rp2/wifi_uart.c
- /mnt/h/qian/micropython/micropython-spi/micropython/ports/rp2/wifi_uart.h
  /mnt/h/qian/micropython/micropython-spi/micropython/py/misc.h
  /mnt/h/qian/micropython/micropython-spi/micropython/py/mpconfig.h
  /mnt/h/qian/micropython/micropython-spi/micropython/py/mperrno.h

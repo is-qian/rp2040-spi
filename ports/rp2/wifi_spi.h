@@ -44,6 +44,13 @@
 #define ESP8285_BUF_SIZE 4096 
 
 #define MICROPY_SPI_NIC 1
+
+#define SPI_MASTER_WRITE_DATA_TO_SLAVE_CMD     2
+#define SPI_MASTER_READ_DATA_FROM_SLAVE_CMD    3
+
+/* SPI status cmd definition */
+#define SPI_MASTER_WRITE_STATUS_TO_SLAVE_CMD   1
+#define SPI_MASTER_READ_STATUS_FROM_SLAVE_CMD  4
 //////////////////////////////////////////////////////////
 
 #define STATION_MODE  1
@@ -91,9 +98,30 @@ typedef struct _esp8285_obj
 	mp_obj_t spi_obj;
 	Buffer_t buffer;
 }esp8285_obj;
+
+typedef struct {
+    uint8_t cmd;                  
+    uint8_t addr;                
+    uint8_t data[64];                 
+} spi_trans_data;
+
+typedef struct {
+    uint8_t cmd;                                  
+    uint32_t len;                 
+} spi_trans_len;
+
+typedef enum {
+    SPI_NULL = 0,
+    SPI_WRITE,
+    SPI_READ
+} spi_master_mode_t;
+
 /*
  * Provide an easy-to-use way to manipulate ESP8285. 
  */
+
+uint32_t readCmd(esp8285_obj* nic, char* data);
+
 
 bool kick(esp8285_obj* nic);
 
