@@ -476,7 +476,7 @@ uint32_t readdata(esp8285_obj* nic, char* data)
 		spi_stream->transfer(nic->spi_obj,data_len,(uint8_t *)&trans_data,(uint8_t *)&trans_data);
 		gpio_put(6,1);
 		memcpy(data, trans_data.data, sizeof(trans_data.data));
-		mp_printf(MP_PYTHON_PRINTER, "read data: %s len:%d\n",data,strlen(trans_data.data));
+		sleep_ms(1);
 		read_time--;
 	}
 	return read_time;
@@ -731,7 +731,7 @@ uint32_t readCmd(esp8285_obj* nic, char* data)
 		spi_stream->transfer(nic->spi_obj,data_len,(uint8_t *)&trans_data,(uint8_t *)&trans_data);
 		gpio_put(6,1);
 		memcpy(data, trans_data.data, sizeof(trans_data.data));
-		mp_printf(MP_PYTHON_PRINTER, "read data: %s len:%d\n",data,strlen(trans_data.data));
+		sleep_ms(1);
 		read_time--;
 		data += 64;
 	}
@@ -752,7 +752,6 @@ void sendCmd(esp8285_obj* nic, char* data, uint32_t data_size)
 	trans_len.cmd = SPI_MASTER_WRITE_STATUS_TO_SLAVE_CMD;
 	trans_len.len = data_size;
 	int data_len = sizeof(spi_trans_len);
-	mp_printf(MP_PYTHON_PRINTER, "senddata_len: cmd:%d,len:%d\n",trans_len.cmd,trans_len.len);
 	mp_hal_pin_output(6);
 	gpio_put(6,0);
 	spi_stream->transfer(nic->spi_obj,sizeof(trans_len.cmd),(uint8_t *)&trans_len.cmd,(uint8_t *)&trans_len.cmd);
@@ -760,7 +759,7 @@ void sendCmd(esp8285_obj* nic, char* data, uint32_t data_size)
 	gpio_put(6,1);
 	unsigned long start = 0;
 	send_time = (data_size + 63) / 64;
-	mp_printf(MP_PYTHON_PRINTER, "redy send data NO.%d len:%d data:%s\n",send_time,strlen(data),data);
+	sleep_ms(1);
 	while(send_time > 0) {
 		memset(&trans_data, 0x0, sizeof(trans_data));           // clear all bit
 		data_len = sizeof(trans_data);
@@ -792,7 +791,6 @@ void sendCmd(esp8285_obj* nic, char* data, uint32_t data_size)
 	trans_len.cmd = SPI_MASTER_WRITE_STATUS_TO_SLAVE_CMD;
 	trans_len.len = 0;
 	data_len = sizeof(spi_trans_len);
-	mp_printf(MP_PYTHON_PRINTER, "send Cmd over: cmd:%d,len:%d\n",trans_len.cmd,trans_len.len);
 	gpio_put(6,0);
 	spi_stream->transfer(nic->spi_obj,sizeof(trans_len.cmd),(uint8_t *)&trans_len.cmd,(uint8_t *)&trans_len.cmd);
 	spi_stream->transfer(nic->spi_obj,sizeof(trans_len.len),(uint8_t *)&trans_len.len,(uint8_t *)&trans_len.len);
@@ -1348,7 +1346,6 @@ bool eINIT(esp8285_obj* nic, int mode)
 	if(!mode & SOFTAP_MODE){
 		init_flag = init_flag && leaveAP(nic);
 	}
-	mp_printf(MP_PYTHON_PRINTER, "eINIT end:%d\n",init_flag);
 	return init_flag;
 }
 
