@@ -37,7 +37,11 @@
 #include "wifi_spi.h"
 #include "mpconfigboard.h"
 #include "buffer.h"
-#define SPI_ID    1
+typedef struct _machine_spi1_obj_t {
+    int id;
+    int flag_table;
+    int flag;
+} machine_spi1_obj_t;
 STATIC bool nic_connected = false;
 typedef struct _nic_spi_obj_t
 {
@@ -296,9 +300,9 @@ STATIC mp_obj_t esp8285_make_new(const mp_obj_type_t *type, size_t n_args, size_
 #if MICROPY_SPI_NIC
     int idx = 0;
     idx = mp_obj_get_int(args[0]);
-	int spi_id = SPI_ID;
+	machine_spi1_obj_t spi_wifi = {730, 1};
     //machine_spi1_obj_t spi_wifi = { 3, 3362, 4000001, 5346, 1, 5306, 1, 3378, 17, 4066, 3, 4970, 268675108, 4898, 268675084, 5834, 268675100};
-    mp_obj_t wifi_spi = machine_spi_type.make_new((mp_obj_type_t *)&machine_spi_type, 1, 0, &spi_id);
+    mp_obj_t wifi_spi = machine_spi_type.make_new((mp_obj_type_t *)&machine_spi_type, 0, 1, &spi_wifi);
     if (&machine_spi_type != mp_obj_get_type(wifi_spi))
     {
         mp_raise_ValueError("invalid uart stream");
