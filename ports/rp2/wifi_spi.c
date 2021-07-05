@@ -367,7 +367,7 @@ bool get_mqttsubrecv(esp8285_obj*nic, uint32_t LinkID, mqtt_msg* mqttmsg)
 	const mp_stream_p_t * spi_stream = mp_get_stream(nic->spi_obj);
 	machine_spi_obj_t *self = MP_OBJ_TO_PTR(nic->spi_obj);
 	while (mp_hal_ticks_ms() - start < 3000) {
-        while(gpio_get(12) > 0) {
+        while(gpio_get(SPI_HANDSHARK) > 0) {
             iter += readCmd(nic->spi_obj,&nic->buffer.buffer);
         }
 	}
@@ -461,20 +461,20 @@ uint32_t readdata(esp8285_obj* nic, char* data)
 		trans_len.cmd = SPI_MASTER_READ_STATUS_FROM_SLAVE_CMD;
 		trans_len.len = 0;
 		int data_len = sizeof(trans_len);
-		mp_hal_pin_output(6);
-		gpio_put(6,0);
+		mp_hal_pin_output(SPI_CS);
+		gpio_put(SPI_CS,0);
 		spi_stream->transfer(nic->spi_obj,sizeof(trans_len.cmd),(uint8_t *)&trans_len.cmd,(uint8_t *)&trans_len.cmd);
 		spi_stream->transfer(nic->spi_obj,sizeof(trans_len.len),(uint8_t *)&trans_len.len,(uint8_t *)&trans_len.len);
-		gpio_put(6,1);
+		gpio_put(SPI_CS,1);
 		read_time = (trans_len.len + 63) / 64;
 	}
 	if(read_time > 0) {
 		data_len = sizeof(trans_data);
 		trans_data.cmd = SPI_MASTER_READ_DATA_FROM_SLAVE_CMD;
 		trans_data.addr = 0x00;	
-		gpio_put(6,0);
+		gpio_put(SPI_CS,0);
 		spi_stream->transfer(nic->spi_obj,data_len,(uint8_t *)&trans_data,(uint8_t *)&trans_data);
-		gpio_put(6,1);
+		gpio_put(SPI_CS,1);
 		memcpy(data, trans_data.data, sizeof(trans_data.data));
 		sleep_ms(1);
 		read_time--;
@@ -561,8 +561,8 @@ uint32_t recvPkg(esp8285_obj*nic,char* out_buff, uint32_t out_buff_len, uint32_t
         //self->read_lock = true;
         //spi_drain_rx_fifo(self);
         //self->read_lock = false;
-		mp_hal_pin_input(12);
-        if(gpio_get(12) > 0)
+		mp_hal_pin_input(SPI_HANDSHARK);
+        if(gpio_get(SPI_HANDSHARK) > 0)
         {
 			if(temp_read_len == 0 || temp_read_len == 64){
 				readdata(nic->spi_obj,temp_read);
@@ -664,8 +664,8 @@ uint32_t recvPkg(esp8285_obj*nic,char* out_buff, uint32_t out_buff_len, uint32_t
         //self->read_lock = true;
         //spi_drain_rx_fifo(self);
         //self->read_lock = false;
-		mp_hal_pin_input(12);
-    }while( (timeout || find_frame_flag_index) && (!*peer_closed || gpio_get(12) > 0) );
+		mp_hal_pin_input(SPI_HANDSHARK);
+    }while( (timeout || find_frame_flag_index) && (!*peer_closed || gpio_get(SPI_HANDSHARK) > 0) );
     size = Buffer_Size(&nic->buffer);
     if( size == 0 && !peer_just_closed && *peer_closed)//peer closed and no data in buffer
     {
@@ -715,11 +715,11 @@ uint32_t readCmd(esp8285_obj* nic, char* data)
 		trans_len.cmd = SPI_MASTER_READ_STATUS_FROM_SLAVE_CMD;
 		trans_len.len = 0;
 		int data_len = sizeof(trans_len);
-		mp_hal_pin_output(6);
-		gpio_put(6,0);
+		mp_hal_pin_output(SPI_CS);
+		gpio_put(SPI_CS,0);
 		spi_stream->transfer(nic->spi_obj,sizeof(trans_len.cmd),(uint8_t *)&trans_len.cmd,(uint8_t *)&trans_len.cmd);
 		spi_stream->transfer(nic->spi_obj,sizeof(trans_len.len),(uint8_t *)&trans_len.len,(uint8_t *)&trans_len.len);
-		gpio_put(6,1);
+		gpio_put(SPI_CS,1);
 		read_time = (trans_len.len + 63) / 64;
 		read_last_len = (trans_len.len + 64) % 64;
 	}
@@ -727,9 +727,9 @@ uint32_t readCmd(esp8285_obj* nic, char* data)
 		data_len = sizeof(trans_data);
 		trans_data.cmd = SPI_MASTER_READ_DATA_FROM_SLAVE_CMD;
 		trans_data.addr = 0x00;	
-		gpio_put(6,0);
+		gpio_put(SPI_CS,0);
 		spi_stream->transfer(nic->spi_obj,data_len,(uint8_t *)&trans_data,(uint8_t *)&trans_data);
-		gpio_put(6,1);
+		gpio_put(SPI_CS,1);
 		memcpy(data, trans_data.data, sizeof(trans_data.data));
 		sleep_ms(1);
 		read_time--;
@@ -752,11 +752,11 @@ void sendCmd(esp8285_obj* nic, char* data, uint32_t data_size)
 	trans_len.cmd = SPI_MASTER_WRITE_STATUS_TO_SLAVE_CMD;
 	trans_len.len = data_size;
 	int data_len = sizeof(spi_trans_len);
-	mp_hal_pin_output(6);
-	gpio_put(6,0);
+	mp_hal_pin_output(SPI_CS);
+	gpio_put(SPI_CS,0);
 	spi_stream->transfer(nic->spi_obj,sizeof(trans_len.cmd),(uint8_t *)&trans_len.cmd,(uint8_t *)&trans_len.cmd);
 	spi_stream->transfer(nic->spi_obj,sizeof(trans_len.len),(uint8_t *)&trans_len.len,(uint8_t *)&trans_len.len);
-	gpio_put(6,1);
+	gpio_put(SPI_CS,1);
 	unsigned long start = 0;
 	send_time = (data_size + 63) / 64;
 	sleep_ms(1);
@@ -770,19 +770,19 @@ void sendCmd(esp8285_obj* nic, char* data, uint32_t data_size)
 		else
 			memcpy(&trans_data.data, data, 64);
 		start = mp_hal_ticks_ms();
-		while( gpio_get(12) == 0){
+		while( gpio_get(SPI_HANDSHARK) == 0){
 			if(mp_hal_ticks_ms() - start < 1000)
 				return false;
 		}
-		gpio_put(6,0);
+		gpio_put(SPI_CS,0);
 		spi_stream->transfer(nic->spi_obj,data_len,(uint8_t *)&trans_data,0);
-		gpio_put(6,1);
+		gpio_put(SPI_CS,1);
 		send_time--;
 		data += 64;
 	}	
 		
 	start = mp_hal_ticks_ms();
-	while( gpio_get(12) == 0){
+	while( gpio_get(SPI_HANDSHARK) == 0){
 		if(mp_hal_ticks_ms() - start < 1000)
 			return false;
 	}
@@ -791,10 +791,10 @@ void sendCmd(esp8285_obj* nic, char* data, uint32_t data_size)
 	trans_len.cmd = SPI_MASTER_WRITE_STATUS_TO_SLAVE_CMD;
 	trans_len.len = 0;
 	data_len = sizeof(spi_trans_len);
-	gpio_put(6,0);
+	gpio_put(SPI_CS,0);
 	spi_stream->transfer(nic->spi_obj,sizeof(trans_len.cmd),(uint8_t *)&trans_len.cmd,(uint8_t *)&trans_len.cmd);
 	spi_stream->transfer(nic->spi_obj,sizeof(trans_len.len),(uint8_t *)&trans_len.len,(uint8_t *)&trans_len.len);
-	gpio_put(6,1);
+	gpio_put(SPI_CS,1);
 	read_time = 0;
 }
 
@@ -802,8 +802,8 @@ void rx_empty(esp8285_obj* nic)
 {
 	int errcode;
 	char *data;
-    mp_hal_pin_input(12);
-    while(gpio_get(12) > 0){
+    mp_hal_pin_input(SPI_HANDSHARK);
+    while(gpio_get(SPI_HANDSHARK) > 0){
 		readCmd(nic, data); 
     }
 }
@@ -816,7 +816,7 @@ char* recvString_1(esp8285_obj* nic, const char* target1,uint32_t timeout)
     unsigned long start = mp_hal_ticks_ms();
 	machine_spi_obj_t *self = MP_OBJ_TO_PTR(nic->spi_obj);
 	while (mp_hal_ticks_ms() - start < timeout) {
-        while(gpio_get(12) > 0){
+        while(gpio_get(SPI_HANDSHARK) > 0){
 			iter += readCmd(nic, nic->buffer.buffer+iter);	
         }
         if (data_find(nic->buffer.buffer,iter,target1) != -1) {
@@ -836,7 +836,7 @@ char* recvString_2(esp8285_obj* nic,char* target1, char* target2, uint32_t timeo
     unsigned int start = mp_hal_ticks_ms();
 	machine_spi_obj_t *self = MP_OBJ_TO_PTR(nic->spi_obj);
     while (mp_hal_ticks_ms() - start < timeout) {
-        while(gpio_get(12) > 0 && iter < ESP8285_BUF_SIZE) {
+        while(gpio_get(SPI_HANDSHARK) > 0 && iter < ESP8285_BUF_SIZE) {
 			iter += readCmd(nic, nic->buffer.buffer+iter);	
         }
         if (data_find(nic->buffer.buffer,iter,target1) != -1) {
@@ -866,8 +866,8 @@ char* recvString_3(esp8285_obj* nic,char* target1, char* target2,char* target3,u
         //self->read_lock = true;
         //spi_drain_rx_fifo(self);
         //self->read_lock = false;
-		mp_hal_pin_input(12);
-        while(gpio_get(12) > 0) {
+		mp_hal_pin_input(SPI_HANDSHARK);
+        while(gpio_get(SPI_HANDSHARK) > 0) {
             iter += readCmd(nic, nic->buffer.buffer+iter);
         }
         if (data_find(nic->buffer.buffer,iter,target1) != -1) {

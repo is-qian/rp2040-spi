@@ -300,7 +300,7 @@ STATIC mp_obj_t esp8285_make_new(const mp_obj_type_t *type, size_t n_args, size_
 #if MICROPY_SPI_NIC
     int idx = 0;
     idx = mp_obj_get_int(args[0]);
-	machine_spi1_obj_t spi_wifi = {730, 1};
+	machine_spi1_obj_t spi_wifi = {730, 3};
     //machine_spi1_obj_t spi_wifi = { 3, 3362, 4000001, 5346, 1, 5306, 1, 3378, 17, 4066, 3, 4970, 268675108, 4898, 268675084, 5834, 268675100};
     mp_obj_t wifi_spi = machine_spi_type.make_new((mp_obj_type_t *)&machine_spi_type, 0, 1, &spi_wifi);
     if (&machine_spi_type != mp_obj_get_type(wifi_spi))
@@ -356,8 +356,8 @@ STATIC mp_obj_t esp8285_active(size_t n_args, const mp_obj_t *args)
 			gpio_put(24,1);
 			gpio_put(22,1);
 			gpio_put(25,0);
-			gpio_put(6,1);
-			mp_hal_pin_input(12);
+			gpio_put(SPI_CS,1);
+			mp_hal_pin_input(SPI_HANDSHARK);
             if (0 == eINIT(&self->esp8285, mode))
             {
                 nlr_raise(mp_obj_new_exception_msg_varg(&mp_type_OSError, "couldn't init nic esp8285 ,try again please\n"));
