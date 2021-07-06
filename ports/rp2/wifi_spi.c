@@ -399,6 +399,11 @@ bool wifi_softap_get_config(esp8285_obj* nic, softap_config* apconfig)
 		return false;
 	}
 	sscanf(cur, "+CWSAP:\"%[^\"]\",\"%[^\"]\",%d,%d,%d,%d", apconfig->ssid, apconfig->password, &apconfig->channel, &apconfig->authmode,  &apconfig->max_conn, &apconfig->ssid_hidden);
+	if(apconfig->authmode > 5 || apconfig->authmode < 0)
+	{
+		sscanf(cur, "+CWSAP:\"%[^\"]\",\"\",%d,%d,%d,%d", apconfig->ssid, &apconfig->channel, &apconfig->authmode,  &apconfig->max_conn, &apconfig->ssid_hidden);
+		*apconfig->password = NULL;
+	}
 	//nlr_raise(mp_obj_new_exception_msg_varg(&mp_type_OSError, "qian connect to 1.%s 2.%s 3.%d 4.%d 5.%d 6.%d", apconfig->ssid,apconfig->password,&apconfig->channel,&apconfig->authmode,&apconfig->max_conn,&apconfig->ssid_hidden));
 	return true;
 }
