@@ -446,7 +446,6 @@ uint32_t esp_recv_mul(esp8285_obj* nic,char mux_id, char* buffer, uint32_t buffe
     }
     return 0;
 }
-
 uint32_t readdata(esp8285_obj* nic, char* data)
 {
 	static uint32_t read_time = 0;
@@ -472,11 +471,12 @@ uint32_t readdata(esp8285_obj* nic, char* data)
 		data_len = sizeof(trans_data);
 		trans_data.cmd = SPI_MASTER_READ_DATA_FROM_SLAVE_CMD;
 		trans_data.addr = 0x00;	
+		sleep_us(50);
 		gpio_put(SPI_CS,0);
 		spi_stream->transfer(nic->spi_obj,data_len,(uint8_t *)&trans_data,(uint8_t *)&trans_data);
 		gpio_put(SPI_CS,1);
 		memcpy(data, trans_data.data, sizeof(trans_data.data));
-		sleep_ms(1);
+		sleep_us(150);
 		read_time--;
 	}
 	return read_time;
@@ -704,6 +704,7 @@ static uint32_t read_time = 0;
 uint32_t readCmd(esp8285_obj* nic, char* data)
 {
 	static uint32_t read_last_len = 0;
+	uint8_t tmp = 0;
 	spi_trans_len trans_len;
 	spi_trans_data trans_data;
 	memset(&trans_len, 0x0, sizeof(trans_len));
@@ -727,11 +728,13 @@ uint32_t readCmd(esp8285_obj* nic, char* data)
 		data_len = sizeof(trans_data);
 		trans_data.cmd = SPI_MASTER_READ_DATA_FROM_SLAVE_CMD;
 		trans_data.addr = 0x00;	
+		sleep_us(50);
 		gpio_put(SPI_CS,0);
 		spi_stream->transfer(nic->spi_obj,data_len,(uint8_t *)&trans_data,(uint8_t *)&trans_data);
 		gpio_put(SPI_CS,1);
 		memcpy(data, trans_data.data, sizeof(trans_data.data));
-		sleep_ms(1);
+		sleep_us(180);
+		tmp = 64;
 		read_time--;
 		data += 64;
 	}
@@ -739,7 +742,7 @@ uint32_t readCmd(esp8285_obj* nic, char* data)
 		*(data+read_last_len) = "\0";
 		return read_last_len;
 	}
-	return 64;
+	return tmp;
 }
 
 void sendCmd(esp8285_obj* nic, char* data, uint32_t data_size)
@@ -759,8 +762,8 @@ void sendCmd(esp8285_obj* nic, char* data, uint32_t data_size)
 	gpio_put(SPI_CS,1);
 	unsigned long start = 0;
 	send_time = (data_size + 63) / 64;
-	sleep_ms(1);
 	while(send_time > 0) {
+		sleep_us(100);
 		memset(&trans_data, 0x0, sizeof(trans_data));           // clear all bit
 		data_len = sizeof(trans_data);
 		trans_data.cmd = SPI_MASTER_WRITE_DATA_TO_SLAVE_CMD;
@@ -777,16 +780,16 @@ void sendCmd(esp8285_obj* nic, char* data, uint32_t data_size)
 		gpio_put(SPI_CS,0);
 		spi_stream->transfer(nic->spi_obj,data_len,(uint8_t *)&trans_data,0);
 		gpio_put(SPI_CS,1);
+		sleep_us(100);
 		send_time--;
 		data += 64;
 	}	
-		
+
 	start = mp_hal_ticks_ms();
 	while( gpio_get(SPI_HANDSHARK) == 0){
 		if(mp_hal_ticks_ms() - start < 1000)
 			return false;
 	}
-	
  	memset(&trans_len, 0x0, sizeof(trans_len));
 	trans_len.cmd = SPI_MASTER_WRITE_STATUS_TO_SLAVE_CMD;
 	trans_len.len = 0;
@@ -866,7 +869,6 @@ char* recvString_3(esp8285_obj* nic,char* target1, char* target2,char* target3,u
         //self->read_lock = true;
         //spi_drain_rx_fifo(self);
         //self->read_lock = false;
-		mp_hal_pin_input(SPI_HANDSHARK);
         while(gpio_get(SPI_HANDSHARK) > 0) {
             iter += readCmd(nic, nic->buffer.buffer+iter);
         }
@@ -1021,7 +1023,7 @@ bool sATCWJAP(esp8285_obj* nic, const char* ssid, const char* pwd)
 	sendCmd(nic,pwd,strlen(pwd));
 	sendCmd(nic,"\"",strlen("\""));
 	sendCmd(nic,"\r\n",strlen("\r\n"));
-    if(recvString_2(nic,"OK", "FAIL", 10000, &find) != NULL && find==0 )
+    if(recvString_2(nic,"OK", "ERROR", 20000, &find) != NULL && find==0 )
         return true;
     return false;
 }

@@ -46,7 +46,7 @@
 #define MICROPY_SPI_NIC 1
 
 #define SPI_HANDSHARK   21
-#define SPI_CS   10
+#define SPI_CS   9
 
 #define SPI_MASTER_WRITE_DATA_TO_SLAVE_CMD     2
 #define SPI_MASTER_READ_DATA_FROM_SLAVE_CMD    3

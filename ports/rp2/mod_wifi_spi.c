@@ -330,7 +330,7 @@ STATIC mp_obj_t esp8285_active(size_t n_args, const mp_obj_t *args)
 	{
 		if (!qATCWMODE(&self->esp8285, &mode))
 		{
-        nlr_raise(mp_obj_new_exception_msg_varg(&mp_type_OSError, "couldn't init nic esp8285 ,try again \n"));
+			nlr_raise(mp_obj_new_exception_msg_varg(&mp_type_OSError, "couldn't init nic esp8285 ,try again \n"));
 		}
 	}
     if (n_args > 1)
@@ -351,13 +351,14 @@ STATIC mp_obj_t esp8285_active(size_t n_args, const mp_obj_t *args)
 			mp_hal_pin_output(22);
 			mp_hal_pin_output(24);
 			mp_hal_pin_output(25);
-			mp_hal_pin_output(6);
+			mp_hal_pin_output(SPI_CS);
 			gpio_put(21,1);
 			gpio_put(24,1);
 			gpio_put(22,1);
+			gpio_put(SPI_CS,0);
 			gpio_put(25,0);
-			gpio_put(SPI_CS,1);
 			mp_hal_pin_input(SPI_HANDSHARK);
+			gpio_put(SPI_CS,1);
             if (0 == eINIT(&self->esp8285, mode))
             {
                 nlr_raise(mp_obj_new_exception_msg_varg(&mp_type_OSError, "couldn't init nic esp8285 ,try again please\n"));
@@ -442,7 +443,7 @@ STATIC mp_obj_t esp8285_config(size_t n_args, const mp_obj_t *args, mp_map_t *kw
                     {
                         if (false == sCIPSTAMAC(&self->esp8285, bufinfo.buf))
                         {
-                            nlr_raise(mp_obj_new_exception_msg_varg(&mp_type_OSError, "couldn't set MAC ,try again please\n"));
+                            nlr_raise(mp_obj_new_exception_msg_varg(&mp_type_OSError, "couldn't set MAC ,try again \n"));
                         }
                     }
                     if (self->mode == SOFTAP_MODE)
@@ -555,14 +556,14 @@ STATIC mp_obj_t esp8285_config(size_t n_args, const mp_obj_t *args, mp_map_t *kw
         {
             if (false == qCIPSTAMAC(&self->esp8285, mac))
             {
-                nlr_raise(mp_obj_new_exception_msg_varg(&mp_type_OSError, "couldn't set MAC ,try again please\n"));
+                nlr_raise(mp_obj_new_exception_msg_varg(&mp_type_OSError, "couldn't read MAC ,try again \n"));
             }
         }
         if (self->mode == SOFTAP_MODE)
         {
             if (false == qCIPAPMAC(&self->esp8285, mac))
             {
-                nlr_raise(mp_obj_new_exception_msg_varg(&mp_type_OSError, "couldn't set MAC ,try again please\n"));
+                nlr_raise(mp_obj_new_exception_msg_varg(&mp_type_OSError, "couldn't read MAC ,try again please\n"));
             }
         }
         return mp_obj_new_str(mac, sizeof(mac));
@@ -594,7 +595,7 @@ STATIC mp_obj_t esp8285_config(size_t n_args, const mp_obj_t *args, mp_map_t *kw
         char s[64];
         if (false == qCWHOSTNAME(&self->esp8285, s))
         {
-            nlr_raise(mp_obj_new_exception_msg_varg(&mp_type_OSError, "couldn't set hostname ,try again please\n"));
+            nlr_raise(mp_obj_new_exception_msg_varg(&mp_type_OSError, "couldn't read hostname ,try again please\n"));
         }
         if (s == NULL)
         {
@@ -787,7 +788,7 @@ STATIC mp_obj_t esp8285_scan_wifi(mp_obj_t self_in)
     return list;
 err:
     snprintf(fail_str, sizeof(fail_str), "wifi scan fail:%d", err_code);
-    mp_raise_msg(&mp_type_OSError, fail_str);
+	nlr_raise(mp_obj_new_exception_msg_varg(&mp_type_OSError, fail_str));
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(esp8285_scan_wifi_obj, esp8285_scan_wifi); 
 
