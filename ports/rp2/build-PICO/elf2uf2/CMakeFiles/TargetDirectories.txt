@@ -1,0 +1,5 @@
+/mnt/h/qian/micropython/micropython-spi/micropython/ports/rp2/build-PICO/elf2uf2/CMakeFiles/rebuild_cache.dir
+/mnt/h/qian/micropython/micropython-spi/micropython/ports/rp2/build-PICO/elf2uf2/CMakeFiles/elf2uf2.dir
+/mnt/h/qian/micropython/micropython-spi/micropython/ports/rp2/build-PICO/elf2uf2/CMakeFiles/edit_cache.dir
+/mnt/h/qian/micropython/micropython-spi/micropython/ports/rp2/build-PICO/elf2uf2/boot_uf2_headers/CMakeFiles/rebuild_cache.dir
+/mnt/h/qian/micropython/micropython-spi/micropython/ports/rp2/build-PICO/elf2uf2/boot_uf2_headers/CMakeFiles/edit_cache.dir
